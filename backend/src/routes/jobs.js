@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAuth } from '../middleware/auth.js';
 import { idempotency } from '../middleware/idempotency.js';
 import { quoteJob } from '../lib/pricing.js';
+import { scanJob, blockMessage } from '../lib/moderate.js';
 import { publish } from '../lib/events.js';
 import { enqueue } from '../lib/queue.js';
 
@@ -12,11 +13,18 @@ const postSchema = z.object({
   city: z.string().min(2).max(60),
   rush: z.boolean().optional().default(false),
   clientId: z.string().max(80).optional(),
+  description: z.string().max(500).optional().default(''),
+  deadline: z.enum(['asap', '24h', 'week']).optional().default('asap'),
+  videoLength: z.enum(['0:45', '1:30', '3:00']).optional().default('1:30'),
 });
 
 const deliverSchema = z.object({
   videoUrl: z.string().url().max(500),
 });
+
+// Allowlist: status filters are never interpolated into SQL, and anything
+// outside the state machine is rejected at the edge.
+const STATUSES = ['open', 'claimed', 'delivered', 'paid', 'refunded'];
 
 export function jobRoutes(store) {
   const r = Router();
@@ -25,7 +33,14 @@ export function jobRoutes(store) {
   // Public live feed — cursor paginated so it stays fast at 1M+ rows.
   r.get('/feed', async (req, res, next) => {
     try {
-      const { status = 'open', city, cursor, limit } = req.query;
+      const { city, cursor, limit } = req.query;
+      const status = String(req.query.status ?? 'open');
+      if (!STATUSES.includes(status)) {
+        return res.status(400).json({ error: { code: 'bad_status', message: 'unknown status' } });
+      }
+      if (cursor && String(cursor).length > 200) {
+        return res.status(400).json({ error: { code: 'bad_cursor', message: 'invalid cursor' } });
+      }
       const out = await store.listFeed({
         status: String(status || 'open'),
         city: city ? String(city) : undefined,
@@ -50,10 +65,15 @@ export function jobRoutes(store) {
     } catch (e) { next(e); }
   });
 
-  // Post a job — price computed server-side, escrow hold recorded.
+  // Post a job — validated, scanned, server-priced, escrow held.
   r.post('/', auth, idempotency(store), async (req, res, next) => {
     try {
       const body = postSchema.parse(req.body);
+      // Server-side moderation is authoritative: blocks reject, flags ride along.
+      const scan = scanJob({ title: body.title, description: body.description });
+      if (!scan.ok) {
+        return res.status(422).json({ error: { code: scan.blocked[0].code, message: blockMessage(scan) } });
+      }
       const quote = quoteJob(body.category, body.rush);
       const job = await store.createJob({
         askerId: req.user.id,
@@ -66,8 +86,12 @@ export function jobRoutes(store) {
         fee: quote.fee,
         doerShare: quote.doer,
         clientId: body.clientId,
+        description: body.description,
+        deadline: body.deadline,
+        videoLength: body.videoLength,
+        moderation: { score: scan.score, flags: scan.flagged.map((f) => f.code), at: new Date().toISOString() },
       });
-      await publish('job.opened', { jobId: job.id, city: job.city, total: job.total });
+      publish('job.opened', { jobId: job.id, city: job.city, total: job.total });
       res.status(job.duplicate ? 200 : 201).json({ job, quote });
     } catch (e) { next(e); }
   });
@@ -88,7 +112,7 @@ export function jobRoutes(store) {
         draft.status = 'claimed';
         draft.doerId = req.user.id;
       });
-      await publish('job.claimed', { jobId: job.id, doerId: req.user.id });
+      publish('job.claimed', { jobId: job.id, doerId: req.user.id });
       res.json({ job });
     } catch (e) { next(e); }
   });
@@ -106,8 +130,8 @@ export function jobRoutes(store) {
         draft.status = 'delivered';
         draft.videoUrl = body.videoUrl;
       });
-      await publish('job.delivered', { jobId: job.id });
-      await enqueue('moderation.scan', { jobId: job.id, videoUrl: body.videoUrl });
+      publish('job.delivered', { jobId: job.id });
+      enqueue('moderation.scan', { jobId: job.id, videoUrl: body.videoUrl });
       res.json({ job });
     } catch (e) { next(e); }
   });
@@ -125,8 +149,8 @@ export function jobRoutes(store) {
       });
       await store.appendLedger({ jobId: job.id, type: 'release', amount: job.doerShare, actor: job.doerId });
       await store.appendLedger({ jobId: job.id, type: 'fee', amount: job.fee, actor: 'platform' });
-      await publish('job.paid', { jobId: job.id, amount: job.doerShare });
-      await enqueue('payout.released', { jobId: job.id, doerId: job.doerId, amount: job.doerShare });
+      publish('job.paid', { jobId: job.id, amount: job.doerShare });
+      enqueue('payout.released', { jobId: job.id, doerId: job.doerId, amount: job.doerShare });
       res.json({ job });
     } catch (e) { next(e); }
   });
@@ -143,7 +167,7 @@ export function jobRoutes(store) {
         draft.status = 'refunded';
       });
       await store.appendLedger({ jobId: job.id, type: 'refund', amount: job.total, actor: job.askerId });
-      await publish('job.refunded', { jobId: job.id });
+      publish('job.refunded', { jobId: job.id });
       res.json({ job });
     } catch (e) { next(e); }
   });

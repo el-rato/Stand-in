@@ -10,6 +10,10 @@ export async function createStore() {
     console.log('[store] using postgres');
     return createPostgresStore(config.databaseUrl);
   }
+  // Serverless filesystems are read-only: the JSON store cannot persist there.
+  if (process.env.VERCEL) {
+    throw new Error('DATABASE_URL is required on Vercel — the JSON store cannot persist on serverless. See README deploy section.');
+  }
   console.log('[store] using json file:', config.dataFile);
   return createJsonStore(config.dataFile);
 }

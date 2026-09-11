@@ -39,12 +39,12 @@ export function adminRoutes(store) {
       if (current.status === 'open') {
         const job = await store.transitionJob(current.id, 'open', (d) => { d.status = 'refunded'; });
         await store.appendLedger({ jobId: job.id, type: 'refund', amount: job.total, actor: job.askerId });
-        await publish('job.refunded', { jobId: job.id, by: 'admin' });
+        publish('job.refunded', { jobId: job.id, by: 'admin' });
         return res.json({ job });
       }
       if (current.status === 'claimed') {
         const job = await store.transitionJob(current.id, 'claimed', (d) => { d.status = 'open'; d.doerId = null; });
-        await publish('job.reopened', { jobId: job.id, by: 'admin' });
+        publish('job.reopened', { jobId: job.id, by: 'admin' });
         return res.json({ job });
       }
       return res.status(409).json({ error: { code: 'bad_transition', message: `cannot moderate a ${current.status} job` } });

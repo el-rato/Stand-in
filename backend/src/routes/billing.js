@@ -6,6 +6,7 @@ import { idempotency } from '../middleware/idempotency.js';
 import { sha256 } from '../lib/util.js';
 
 const checkoutSchema = z.object({
+  // Demo mode needs no card fields; Stripe mode uses a PaymentMethod id.
   paymentMethodId: z.string().max(120).optional(),
 });
 
@@ -61,6 +62,7 @@ export function billingRoutes(store, config) {
   r.post('/sales', async (req, res, next) => {
     try {
       const body = salesSchema.parse(req.body);
+      // Production: create a CRM lead + send the API demo link.
       res.status(201).json({ ok: true, message: `Demo link queued for ${body.email}` });
     } catch (e) { next(e); }
   });

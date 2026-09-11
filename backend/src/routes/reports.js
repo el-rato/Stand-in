@@ -19,7 +19,7 @@ export function reportRoutes(store) {
     try {
       const body = reportSchema.parse(req.body);
       const report = await store.createReport(body);
-      await publish('report.filed', { reportId: report.id, type: report.type });
+      publish('report.filed', { reportId: report.id, type: report.type });
       res.status(201).json({ report: { id: report.id, type: report.type } });
     } catch (e) { next(e); }
   });

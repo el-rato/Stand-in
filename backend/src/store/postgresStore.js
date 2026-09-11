@@ -4,19 +4,18 @@
 // with SELECT ... FOR UPDATE so concurrent claim/approve calls are safe
 // across any number of API replicas.
 
-import { createRequire } from 'node:module';
 import { newId } from '../lib/util.js';
-
-const require = createRequire(import.meta.url);
 
 export function createPostgresStore(databaseUrl) {
   let Pool;
   try {
-    ({ Pool } = require('pg'));
+    ({ Pool } = awaitImportPg());
   } catch {
     throw new Error('postgres store needs the "pg" package: run `npm i pg`');
   }
   const pool = new Pool({ connectionString: databaseUrl });
+
+  const now = () => new Date().toISOString();
 
   return {
     kind: 'postgres',
@@ -25,7 +24,7 @@ export function createPostgresStore(databaseUrl) {
       const id = newId('u');
       try {
         const { rows } = await pool.query(
-          `INSERT INTO users (id, name, email, pass_hash, city, plan) VALUES ($1,$2,$3,$4,$5,'free') RETURNING id, name, email, city, plan, role, created_at AS "createdAt"`,
+          `INSERT INTO users (id, name, email, pass_hash, city, plan) VALUES ($1,$2,$3,$4,$5,'free') RETURNING id, name, email, city, plan, created_at AS "createdAt"`,
           [id, name, email, passHash, city || '']
         );
         return mapUser(rows[0]);
@@ -43,8 +42,12 @@ export function createPostgresStore(databaseUrl) {
       return rows[0] ? mapUserFull(rows[0]) : null;
     },
     async setPlan(userId, plan) {
-      const { rows } = await pool.query(`UPDATE users SET plan=$2 WHERE id=$1 RETURNING id, name, email, city, plan, role, created_at AS "createdAt"`, [userId, plan]);
-      return rows[0] ? mapUser(rows[0]) : null;
+      const { rows } = await pool.query(`UPDATE users SET plan=$2 WHERE id=$1 RETURNING id, name, email, city, plan`, [userId, plan]);
+      return rows[0] || null;
+    },
+    async setPassword(userId, passHash) {
+      await pool.query(`UPDATE users SET pass_hash=$2 WHERE id=$1`, [userId, passHash]);
+      return true;
     },
 
     async getDoer(userId) {
@@ -62,7 +65,7 @@ export function createPostgresStore(databaseUrl) {
       return mapDoer(rows[0]);
     },
 
-    async createJob({ askerId, title, category, label, city, rush, total, fee, doerShare, clientId }) {
+    async createJob({ askerId, title, category, label, city, rush, total, fee, doerShare, clientId, description, deadline, videoLength, moderation }) {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
@@ -72,9 +75,10 @@ export function createPostgresStore(databaseUrl) {
         }
         const id = newId('j');
         const { rows } = await client.query(
-          `INSERT INTO jobs (id, asker_id, title, category, label, city, rush, total, fee, doer_share, client_id, status)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'open') RETURNING *`,
-          [id, askerId, title, category, label, city, !!rush, total, fee, doerShare, clientId || null]
+          `INSERT INTO jobs (id, asker_id, title, category, label, city, rush, total, fee, doer_share, client_id, description, deadline, video_length, moderation, status)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'open') RETURNING *`,
+          [id, askerId, title, category, label, city, !!rush, total, fee, doerShare, clientId || null,
+            description || '', deadline || 'asap', videoLength || '1:30', JSON.stringify(moderation || { score: 0, flags: [] })]
         );
         await client.query(`INSERT INTO ledger (id, job_id, type, amount, actor) VALUES ($1,$2,'hold',$3,$4)`, [newId('t'), id, total, askerId]);
         await client.query('COMMIT');
@@ -124,7 +128,7 @@ export function createPostgresStore(databaseUrl) {
           throw e;
         }
         const draft = { ...job };
-        mutate(draft);
+        mutate(draft); // mutate camelCase draft
         await client.query(
           `UPDATE jobs SET status=$2, doer_id=$3, video_url=$4, updated_at=NOW() WHERE id=$1`,
           [id, draft.status, draft.doerId || null, draft.videoUrl || null]
@@ -187,125 +191,128 @@ export function createPostgresStore(databaseUrl) {
     },
 
     // ---- admin ----
-    async platformStats() {
-      const [moneyRows, countRows, statusRows] = await Promise.all([
-        pool.query(`SELECT
-          COALESCE(SUM(amount) FILTER (WHERE type='hold'), 0) AS gmv,
-          COALESCE(SUM(amount) FILTER (WHERE type='fee'), 0) AS fees,
-          COALESCE(SUM(amount) FILTER (WHERE type='release' AND created_at >= date_trunc('day', NOW() AT TIME ZONE 'UTC')), 0) AS paid_today
-          FROM ledger`),
-        pool.query(`SELECT
-          (SELECT COUNT(*)::int FROM users) AS users,
-          (SELECT COUNT(*)::int FROM doer_profiles WHERE status='verified') AS verified_doers,
-          (SELECT COALESCE(SUM(amount),0) FROM payouts WHERE status='transferred') AS paid_out`),
-        pool.query(`SELECT status, COUNT(*)::int AS count FROM jobs GROUP BY status`),
-      ]);
-      const jobsByStatus = Object.fromEntries(statusRows.rows.map(r => [r.status, r.count]));
-      return {
-        gmv: Number(moneyRows.rows[0].gmv),
-        fees: Number(moneyRows.rows[0].fees),
-        openJobs: jobsByStatus.open || 0,
-        paidToday: Number(moneyRows.rows[0].paid_today),
-        paidOut: Number(countRows.rows[0].paid_out),
-        users: countRows.rows[0].users,
-        verifiedDoers: countRows.rows[0].verified_doers,
-        jobsByStatus,
-      };
-    },
-    async listAllJobs({ status, cursor, limit = 20 }) {
-      const lim = Math.min(Math.max(limit, 1), 50);
-      const { rows } = await pool.query(
-        `SELECT * FROM jobs
-         WHERE ($1::text IS NULL OR status=$1) AND ($2::timestamptz IS NULL OR created_at < $2)
-         ORDER BY created_at DESC LIMIT $3`,
-        [status || null, cursor || null, lim + 1]
-      );
-      const items = rows.slice(0, lim).map(mapJob);
-      return { items, nextCursor: rows.length > lim ? items.at(-1).createdAt : null };
-    },
-    async listUsers({ q = '', limit = 50 }) {
-      const { rows } = await pool.query(
-        `SELECT id, name, email, city, plan, role, created_at AS "createdAt"
-         FROM users WHERE $1='' OR name ILIKE '%' || $1 || '%' OR email ILIKE '%' || $1 || '%'
-         ORDER BY created_at DESC LIMIT $2`,
-        [q, Math.min(Math.max(limit, 1), 5000)]
-      );
-      return rows.map(mapUser);
-    },
     async setRole(userId, role) {
+      if (!['user', 'admin'].includes(role)) {
+        const e = new Error('invalid role'); e.status = 400; e.code = 'bad_role'; throw e;
+      }
       const { rows } = await pool.query(
-        `UPDATE users SET role=$2 WHERE id=$1 RETURNING id, name, email, city, plan, role, created_at AS "createdAt"`,
+        `UPDATE users SET role=$2 WHERE id=$1 RETURNING id, name, email, city, plan, role`,
         [userId, role]
       );
       if (!rows[0]) { const e = new Error('user not found'); e.status = 404; e.code = 'not_found'; throw e; }
-      return mapUser(rows[0]);
+      return rows[0];
+    },
+    async platformStats() {
+      const [byStatus, money, users, doers] = await Promise.all([
+        pool.query(`SELECT status, COUNT(*)::int AS c FROM jobs GROUP BY status`),
+        pool.query(`SELECT COUNT(*)::int AS n, COALESCE(SUM(total),0)::float AS gmv, COALESCE(SUM(fee),0)::float AS fees, COALESCE(SUM(doer_share),0)::float AS paid FROM jobs WHERE status='paid'`),
+        pool.query(`SELECT COUNT(*)::int AS c FROM users`),
+        pool.query(`SELECT COUNT(*)::int AS c FROM doer_profiles WHERE status='verified'`),
+      ]);
+      const since = new Date(); since.setUTCHours(0, 0, 0, 0);
+      const paidToday = await this.sumReleasedSince(since.toISOString());
+      const jobsByStatus = {};
+      byStatus.rows.forEach(r => { jobsByStatus[r.status] = r.c; });
+      return {
+        users: users.rows[0].c,
+        verifiedDoers: doers.rows[0].c,
+        jobsByStatus,
+        openJobs: jobsByStatus.open || 0,
+        gmv: money.rows[0].gmv, fees: money.rows[0].fees, paidOut: money.rows[0].paid,
+        paidToday,
+      };
+    },
+    async listAllJobs({ status, cursor, limit = 20 }) {
+      const lim = Math.min(limit, 50);
+      const params = [];
+      let where = '';
+      if (status) { params.push(status); where += `status=$${params.length}`; }
+      if (cursor) { params.push(cursor); where += (where ? ' AND ' : '') + `created_at < $${params.length}`; }
+      params.push(lim + 1);
+      const { rows } = await pool.query(
+        `SELECT * FROM jobs ${where ? 'WHERE ' + where : ''} ORDER BY created_at DESC LIMIT $${params.length}`,
+        params
+      );
+      const hasMore = rows.length > lim;
+      const page = rows.slice(0, lim).map(mapJob);
+      return { items: page, nextCursor: hasMore ? page[page.length - 1].createdAt : null };
+    },
+    async listUsers({ q, limit = 50 }) {
+      const needle = `%${q || ''}%`;
+      const { rows } = await pool.query(
+        `SELECT id, name, email, city, plan, COALESCE(role,'user') AS role, created_at AS "createdAt"
+         FROM users WHERE $1='' OR email ILIKE $1 OR name ILIKE $1
+         ORDER BY created_at DESC LIMIT $2`,
+        [q ? needle : '', Math.min(limit, 5000)]
+      );
+      return rows;
     },
     async recentLedger(limit = 50) {
       const { rows } = await pool.query(
-        `SELECT l.id, l.job_id AS "jobId", j.title AS "jobTitle", l.type, l.amount, l.actor, l.created_at AS "at"
-         FROM ledger l LEFT JOIN jobs j ON j.id=l.job_id ORDER BY l.created_at DESC LIMIT $1`,
-        [Math.min(Math.max(limit, 1), 5000)]
-      );
-      return rows.map(r => ({ ...r, amount: Number(r.amount) }));
-    },
-
-    // ---- reports ----
-    async createReport(input) {
-      const { rows } = await pool.query(
-        `INSERT INTO reports (id, type, subject, message, contact, job_id)
-         VALUES ($1,$2,$3,$4,$5,$6)
-         RETURNING id, type, subject, message, contact, job_id AS "jobId", created_at AS "createdAt"`,
-        [newId('r'), input.type, input.subject, input.message, input.contact || '', input.jobId || null]
-      );
-      return rows[0];
-    },
-    async listReports({ type, limit = 50 }) {
-      const { rows } = await pool.query(
-        `SELECT id, type, subject, message, contact, job_id AS "jobId", created_at AS "createdAt"
-         FROM reports WHERE $1::text IS NULL OR type=$1 ORDER BY created_at DESC LIMIT $2`,
-        [type || null, Math.min(Math.max(limit, 1), 5000)]
+        `SELECT l.id, l.job_id AS "jobId", l.type, l.amount, l.actor, l.created_at AS "at", j.title AS "jobTitle"
+         FROM ledger l LEFT JOIN jobs j ON j.id = l.job_id
+         ORDER BY l.created_at DESC LIMIT $1`,
+        [Math.min(limit, 5000)]
       );
       return rows;
     },
 
-    // ---- payouts ----
+    // ---- reports (safety / contact inbox for owners) ----
+    async createReport({ type, subject, message, contact, jobId }) {
+      const { rows } = await pool.query(
+        `INSERT INTO reports (id, type, subject, message, contact, job_id)
+         VALUES ($1,$2,$3,$4,$5,$6)
+         RETURNING id, type, subject, message, contact, job_id AS "jobId", created_at AS "at"`,
+        [newId('r'), type, subject, message, contact || '', jobId || null]
+      );
+      return rows[0];
+    },
+    async listReports({ type, limit = 50 }) {
+      const params = [];
+      let where = '';
+      if (type) { params.push(type); where = `WHERE type=$${params.length}`; }
+      params.push(Math.min(limit, 200));
+      const { rows } = await pool.query(
+        `SELECT id, type, subject, message, contact, job_id AS "jobId", created_at AS "at"
+         FROM reports ${where} ORDER BY created_at DESC LIMIT $${params.length}`,
+        params
+      );
+      return rows;
+    },
+
+    // ---- payouts (locked debit: concurrent claims can't double-pay) ----
     async sumReleasedByDoer(doerId) {
       const { rows } = await pool.query(
-        `SELECT COALESCE(SUM(l.amount),0) AS amount FROM ledger l JOIN jobs j ON j.id=l.job_id
-         WHERE l.type='release' AND j.doer_id=$1`,
-        [doerId]
+        `SELECT COALESCE(SUM(amount),0)::float AS s FROM ledger WHERE type='release' AND actor=$1`, [doerId]
       );
-      return Number(rows[0].amount);
+      return rows[0].s;
     },
     async sumPayoutsByDoer(doerId) {
       const { rows } = await pool.query(
-        `SELECT COALESCE(SUM(amount),0) AS amount FROM payouts
-         WHERE doer_id=$1 AND status = ANY($2::text[])`,
-        [doerId, ['processing', 'transferred', 'queued']]
+        `SELECT COALESCE(SUM(amount),0)::float AS s FROM payouts WHERE doer_id=$1 AND status IN ('processing','transferred','queued')`,
+        [doerId]
       );
-      return Number(rows[0].amount);
+      return rows[0].s;
     },
     async createPayout({ doerId, amount }) {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
-        await client.query(`SELECT id FROM users WHERE id=$1 FOR UPDATE`, [doerId]);
-        const { rows } = await client.query(
-          `SELECT
-            COALESCE((SELECT SUM(l.amount) FROM ledger l JOIN jobs j ON j.id=l.job_id WHERE l.type='release' AND j.doer_id=$1),0)
-            - COALESCE((SELECT SUM(amount) FROM payouts WHERE doer_id=$1 AND status = ANY($2::text[])),0) AS available`,
-          [doerId, ['processing', 'transferred', 'queued']]
-        );
-        if (Number(amount) > Number(rows[0].available) + 0.001) {
-          const e = new Error('payout balance changed'); e.status = 409; e.code = 'balance_changed'; throw e;
+        await client.query(`SELECT * FROM doer_profiles WHERE user_id=$1 FOR UPDATE`, [doerId]);
+        const rel = await client.query(`SELECT COALESCE(SUM(amount),0)::float AS s FROM ledger WHERE type='release' AND actor=$1`, [doerId]);
+        const used = await client.query(`SELECT COALESCE(SUM(amount),0)::float AS s FROM payouts WHERE doer_id=$1 AND status IN ('processing','transferred','queued')`, [doerId]);
+        if (Math.round((rel.rows[0].s - used.rows[0].s) * 100) / 100 < amount - 1e-9) {
+          const e = new Error('insufficient available balance');
+          e.status = 409; e.code = 'insufficient';
+          throw e;
         }
-        const inserted = await client.query(
-          `INSERT INTO payouts (id, doer_id, amount) VALUES ($1,$2,$3)
-           RETURNING id, doer_id AS "doerId", amount, status, transfer_id AS "transferId", created_at AS "createdAt", updated_at AS "updatedAt"`,
+        const { rows } = await client.query(
+          `INSERT INTO payouts (id, doer_id, amount, status) VALUES ($1,$2,$3,'processing')
+           RETURNING id, doer_id AS "doerId", amount, status, transfer_id AS "transferId", created_at AS "at"`,
           [newId('p'), doerId, amount]
         );
         await client.query('COMMIT');
-        return mapPayout(inserted.rows[0]);
+        return rows[0];
       } catch (e) {
         await client.query('ROLLBACK');
         throw e;
@@ -313,32 +320,51 @@ export function createPostgresStore(databaseUrl) {
         client.release();
       }
     },
-    async setPayoutStatus(id, status, transferId = null) {
+    async setPayoutStatus(id, status, transferId) {
       const { rows } = await pool.query(
-        `UPDATE payouts SET status=$2, transfer_id=$3, updated_at=NOW() WHERE id=$1
-         RETURNING id, doer_id AS "doerId", amount, status, transfer_id AS "transferId", created_at AS "createdAt", updated_at AS "updatedAt"`,
-        [id, status, transferId]
+        `UPDATE payouts SET status=$2, transfer_id=COALESCE($3, transfer_id), updated_at=NOW() WHERE id=$1
+         RETURNING id, doer_id AS "doerId", amount, status, transfer_id AS "transferId", created_at AS "at"`,
+        [id, status, transferId || null]
       );
       if (!rows[0]) { const e = new Error('payout not found'); e.status = 404; e.code = 'not_found'; throw e; }
-      return mapPayout(rows[0]);
+      return rows[0];
     },
     async listPayoutsByDoer(doerId) {
       const { rows } = await pool.query(
-        `SELECT id, doer_id AS "doerId", amount, status, transfer_id AS "transferId", created_at AS "createdAt", updated_at AS "updatedAt"
-         FROM payouts WHERE doer_id=$1 ORDER BY created_at DESC`,
-        [doerId]
+        `SELECT id, doer_id AS "doerId", amount, status, transfer_id AS "transferId", created_at AS "at"
+         FROM payouts WHERE doer_id=$1 ORDER BY created_at DESC`, [doerId]
       );
-      return rows.map(mapPayout);
+      return rows;
     },
     async listAllPayouts(limit = 50) {
       const { rows } = await pool.query(
-        `SELECT id, doer_id AS "doerId", amount, status, transfer_id AS "transferId", created_at AS "createdAt", updated_at AS "updatedAt"
-         FROM payouts ORDER BY created_at DESC LIMIT $1`,
-        [Math.min(Math.max(limit, 1), 5000)]
+        `SELECT id, doer_id AS "doerId", amount, status, transfer_id AS "transferId", created_at AS "at"
+         FROM payouts ORDER BY created_at DESC LIMIT $1`, [Math.min(limit, 200)]
       );
-      return rows.map(mapPayout);
+      return rows;
+    },
+    async payoutCandidates(min) {
+      const { rows } = await pool.query(
+        `SELECT d.user_id AS "userId", d.display_name AS "displayName",
+          COALESCE((SELECT SUM(amount)::float FROM ledger WHERE type='release' AND actor=d.user_id),0) AS released,
+          COALESCE((SELECT SUM(amount)::float FROM payouts WHERE doer_id=d.user_id AND status IN ('processing','transferred','queued')),0) AS used
+         FROM doer_profiles d WHERE d.status='verified'`
+      );
+      return rows
+        .map(r => ({ ...r, available: Math.round((r.released - r.used) * 100) / 100 }))
+        .filter(r => r.available >= min);
     },
   };
+}
+
+// Synchronous require hidden behind a function so the module graph loads
+// fine when `pg` is not installed (json store path).
+function awaitImportPg() {
+  return (awaitImportPg._cache ??= initPg());
+  function initPg() {
+    // eslint-disable-next-line global-require
+    return require('pg');
+  }
 }
 
 function mapUser(r) {
@@ -355,15 +381,13 @@ function mapJob(r) {
     id: r.id, askerId: r.asker_id, title: r.title, category: r.category, label: r.label,
     city: r.city, rush: r.rush, total: Number(r.total), fee: Number(r.fee), doerShare: Number(r.doer_share),
     clientId: r.client_id, status: r.status, doerId: r.doer_id, videoUrl: r.video_url,
+    description: r.description || '', deadline: r.deadline || 'asap', videoLength: r.video_length || '1:30',
+    moderation: r.moderation || { score: 0, flags: [] },
     createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
     updatedAt: r.updated_at instanceof Date ? r.updated_at.toISOString() : r.updated_at,
   };
 }
-function mapPayout(r) {
-  return {
-    ...r,
-    amount: Number(r.amount),
-    createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : r.createdAt,
-    updatedAt: r.updatedAt instanceof Date ? r.updatedAt.toISOString() : r.updatedAt,
-  };
-}
+
+// Minimal CJS bridge for optional `pg` inside an ESM file.
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);

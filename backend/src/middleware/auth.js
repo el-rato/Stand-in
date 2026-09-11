@@ -11,7 +11,8 @@ export function requireAuth(store) {
       const header = req.headers.authorization || '';
       const token = header.startsWith('Bearer ') ? header.slice(7) : null;
       if (!token) return res.status(401).json({ error: { code: 'unauthorized', message: 'missing bearer token' } });
-      const claims = jwt.verify(token, config.jwtSecret);
+      // Pinned algorithm: never accept alg:none or foreign algos (confusion attacks).
+      const claims = jwt.verify(token, config.jwtSecret, { algorithms: ['HS256'] });
       const user = await store.findUserById(claims.sub);
       if (!user) return res.status(401).json({ error: { code: 'unauthorized', message: 'unknown user' } });
       req.user = user;
@@ -22,15 +23,19 @@ export function requireAuth(store) {
   };
 }
 
+// Owners only. Emails in ADMIN_EMAILS auto-promote on first admin-area hit
+// (bootstrap path); otherwise use `npm run make-admin`.
 export function requireAdmin(store) {
-  const authenticate = requireAuth(store);
-  return (req, res, next) => {
-    authenticate(req, res, () => {
-      const bootstrapAdmin = config.adminEmails.includes(req.user.email.toLowerCase());
-      if (req.user.role !== 'admin' && !bootstrapAdmin) {
-        return res.status(403).json({ error: { code: 'forbidden', message: 'admin access required' } });
+  const auth = requireAuth(store);
+  return (req, res, next) => auth(req, res, async () => {
+    try {
+      if (req.user.role !== 'admin' && config.adminEmails.includes((req.user.email || '').toLowerCase())) {
+        req.user = await store.setRole(req.user.id, 'admin');
+      }
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: { code: 'forbidden', message: 'admin only' } });
       }
       next();
-    });
-  };
+    } catch (e) { next(e); }
+  });
 }

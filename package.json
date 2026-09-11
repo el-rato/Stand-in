@@ -1,7 +1,6 @@
 {
   "name": "standin",
   "private": true,
-  "type": "module",
   "workspaces": [
     "backend"
   ]

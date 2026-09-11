@@ -14,13 +14,14 @@ export const config = {
   dataFile: process.env.DATA_FILE || path.join(here, '..', 'data', 'db.json'),
   uploadsDir: process.env.UPLOADS_DIR || path.join(here, '..', 'uploads'),
   redisUrl: process.env.REDIS_URL || '',
-  adminEmails: (process.env.ADMIN_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
-  s3Bucket: process.env.S3_BUCKET || '',
-  s3Region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1',
-  s3PublicBaseUrl: (process.env.S3_PUBLIC_BASE_URL || '').replace(/\/$/, ''),
   stripeSecret: process.env.STRIPE_SECRET || '',
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
   frontendOrigin: (process.env.FRONTEND_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean),
   isProd: process.env.NODE_ENV === 'production',
-  isVercel: !!process.env.VERCEL,
+  // Bootstrap owners: these emails auto-promote to admin on first admin-area
+  // hit (or run `npm run make-admin -- you@email.com`). Prefer make-admin.
+  adminEmails: (process.env.ADMIN_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
+  // Complete-product mode: serve the plan folder (index.html, doer.html…)
+  // from the same origin, so the site + API are one deployable unit.
+  webDir: process.env.WEB_DIR || path.resolve(here, '..', '..'),
 };

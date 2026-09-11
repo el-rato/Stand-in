@@ -19,6 +19,8 @@ export function doerRoutes(store) {
     } catch (e) { next(e); }
   });
 
+  // Step 1: profile. Step 2: verification (simulated check here —
+  // swap for Veriff/Onfido webhook in production).
   r.post('/profile', auth, async (req, res, next) => {
     try {
       const body = profileSchema.parse(req.body);
@@ -37,9 +39,11 @@ export function doerRoutes(store) {
       if (!existing) {
         return res.status(400).json({ error: { code: 'no_profile', message: 'create a doer profile first' } });
       }
+      // Simulated verification pass. Production: async vendor callback
+      // flips pending -> verified via a signed webhook route.
       const doer = await store.upsertDoer(req.user.id, { status: 'verified' });
-      await publish('doer.verified', { userId: req.user.id });
-      await enqueue('verification.completed', { userId: req.user.id });
+      publish('doer.verified', { userId: req.user.id });
+      enqueue('verification.completed', { userId: req.user.id });
       res.json({ doer });
     } catch (e) { next(e); }
   });
