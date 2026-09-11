@@ -4,17 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>STANDIN — Pay a human anywhere $3 to do it on camera</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-  theme: {
-    extend: {
-      fontFamily: { grotesk: ['"Cabinet Grotesk"','Outfit','sans-serif'] },
-      colors: { ink:'#111110', bone:'#FFF8EC', lime:'#D8FF3E', tang:'#FF5C28', sky:'#7AB8FF', card:'#151412' }
-    }
-  }
-}
-</script>
+<link rel="stylesheet" href="./styles.css?v=4" />
 <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700,800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -43,7 +33,7 @@ tailwind.config = {
   .modal-hidden{ display:none; }
   .modal-open{ display:flex; }
   #modalBackdrop{ transition: opacity .25s ease; }
-  .field{ width:100%; border:2px solid #111110; border-radius:1rem; padding:.85rem 1rem; font-weight:600; background:#FFFDF6; }
+  .field{ width:100%; border:2px solid #111110; border-radius:1rem; padding:.85rem 1rem; font-weight:600; background:#FFFDF6; color:#111110; caret-color:#111110; }
   .field:focus{ outline:none; background:#D8FF3E33; }
   .toast{ animation: toastIn .35s cubic-bezier(.22,1,.36,1); }
   @keyframes toastIn{ from{ transform:translateY(16px); opacity:0 } to{ transform:translateY(0); opacity:1 } }
@@ -54,29 +44,36 @@ tailwind.config = {
 <body class="grain antialiased">
 <main class="overflow-x-hidden w-full max-w-full">
 
-  <!-- NAV -->
-  <header class="fixed top-4 left-0 right-0 z-[100] px-4 flex justify-center">
-    <nav class="w-full max-w-5xl rounded-full bg-white/85 border-2 border-[#111110] pl-5 pr-2 py-2 flex items-center justify-between shadow-[6px_6px_0_#111110]" style="backdrop-filter:blur(16px)">
-      <a href="#" class="flex items-center gap-2">
+  <!-- NAV : 3 links + 1 action. Nothing else. -->
+  <header class="fixed top-4 left-0 right-0 z-[100] px-4 flex flex-col items-center gap-2">
+    <nav class="w-full max-w-3xl rounded-full bg-white/85 border-2 border-[#111110] pl-5 pr-2 py-2 flex items-center justify-between shadow-[6px_6px_0_#111110]" style="backdrop-filter:blur(16px)">
+      <a href="#top" class="flex items-center gap-2">
         <span class="w-9 h-9 rounded-full bg-[#111110] text-[#D8FF3E] grid place-items-center font-extrabold text-lg">S</span>
         <span class="font-extrabold tracking-tight text-lg">STANDIN</span>
-        <span class="hidden md:inline text-[11px] font-bold uppercase tracking-[0.18em] bg-[#D8FF3E] border border-[#111110] rounded-full px-2.5 py-1 ml-1">humans on demand</span>
       </a>
       <div class="hidden md:flex items-center gap-7 text-[14px] font-semibold">
-        <a href="#money" class="hover:underline underline-offset-4">What sells</a>
-        <a href="#builder" class="hover:underline underline-offset-4">Price it</a>
-        <a href="#live" class="hover:underline underline-offset-4">Live jobs</a>
-        <a href="#pricing" class="hover:underline underline-offset-4">Pricing</a>
+        <a href="#live" data-navlink="live" class="hover:underline underline-offset-4">Live jobs</a>
+        <a href="#pricing" data-navlink="pricing" class="hover:underline underline-offset-4">Pricing</a>
+        <a href="./doer.html" class="hover:underline underline-offset-4">Doer HQ</a>
+        <a href="./admin.html" data-admin-tab style="display:none" class="hover:underline underline-offset-4">Admin</a>
       </div>
-      <div class="flex items-center gap-2">
-        <a href="#builder" data-action="open-login" data-nav="login" class="hidden sm:inline-block text-sm font-bold px-4 py-2.5">Log in</a>
-        <button data-action="open-job" class="text-sm font-extrabold px-5 py-2.5 rounded-full bg-[#111110] text-white hover:bg-black transition-all">Get a human</button>
+      <div class="flex items-center gap-1">
+        <a href="#top" data-action="open-login" data-nav="login" class="hidden sm:inline-block text-sm font-bold px-4 py-2.5">Log in</a>
+        <button data-action="open-job" class="text-sm font-extrabold px-5 py-2.5 rounded-full bg-[#111110] text-white hover:bg-black transition-all">Post a job</button>
+        <button id="navToggle" aria-label="Menu" class="md:hidden w-10 h-10 grid place-items-center rounded-full border-2 border-[#111110] font-extrabold">≡</button>
       </div>
     </nav>
+    <div id="navMenu" class="modal-hidden md:hidden w-full max-w-3xl rounded-3xl bg-white border-2 border-[#111110] p-3 shadow-[6px_6px_0_#111110]">
+      <a href="#live" class="block px-4 py-3 rounded-2xl font-extrabold hover:bg-black/5">Live jobs</a>
+      <a href="#pricing" class="block px-4 py-3 rounded-2xl font-extrabold hover:bg-black/5">Pricing</a>
+      <a href="./doer.html" class="block px-4 py-3 rounded-2xl font-extrabold hover:bg-black/5">Doer HQ — earn filming</a>
+      <a href="./admin.html" data-admin-tab style="display:none" class="block px-4 py-3 rounded-2xl font-extrabold hover:bg-black/5">Admin console</a>
+      <button data-action="open-job" class="mt-1 w-full px-4 py-3.5 rounded-2xl bg-[#111110] text-white font-extrabold">Post a job — from $3</button>
+    </div>
   </header>
 
   <!-- ATTENTION : artistic asymmetry -->
-  <section class="relative pt-32 md:pt-40 pb-16 md:pb-24 px-5 md:px-12 max-w-7xl mx-auto grid lg:grid-cols-[1.05fr_0.95fr] gap-12 items-center min-h-[92vh]">
+  <section id="top" class="relative pt-32 md:pt-40 pb-16 md:pb-24 px-5 md:px-12 max-w-7xl mx-auto grid lg:grid-cols-[1.05fr_0.95fr] gap-12 items-center min-h-[92vh] scroll-mt-24">
     <div class="relative z-10">
       <div class="inline-flex items-center gap-2 bg-white border-2 border-[#111110] rounded-full pl-2 pr-4 py-1.5 sticker mb-7">
         <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -84,7 +81,7 @@ tailwind.config = {
       </div>
       <h1 class="hero-h1 font-extrabold w-full max-w-5xl">
         Pay a stranger $3 to do it
-        <span class="inline-block w-24 md:w-32 h-[0.68em] rounded-full align-middle bg-cover bg-center mx-2 border-2 border-[#111110]" style="background-image:url('https://picsum.photos/seed/parisbalcony/400/200')"></span>
+        <span class="inline-block w-24 md:w-32 h-[0.68em] rounded-full align-middle bg-cover bg-center mx-2 border-2 border-[#111110]" style="background-image:url('https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=400&q=70')"></span>
         on camera.
       </h1>
       <p class="mt-7 text-lg md:text-xl leading-relaxed text-[#111110]/65 max-w-xl">Wake-up roasts, queue spots, bar checks, proposals in Paris, practice pitches. Ask in one sentence. Video back in minutes.</p>
@@ -102,14 +99,14 @@ tailwind.config = {
     <!-- overlapping floating collage -->
     <div class="relative h-[560px] hidden lg:block" id="heroCollage">
       <div class="floaty absolute top-2 left-6 w-72 rounded-3xl overflow-hidden border-2 border-[#111110] sticker bg-white" style="--r:-4deg; transform:rotate(-4deg)">
-        <img src="https://picsum.photos/seed/standparis/600/700" class="w-full h-64 object-cover img-grade" alt="Paris proposal" />
+        <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80" class="w-full h-64 object-cover img-grade" alt="Proposal filmed in Paris" />
         <div class="p-4 flex items-center justify-between">
           <div><p class="font-extrabold text-sm leading-tight">Proposal filmed, Eiffel side street</p><p class="text-xs text-black/50 font-semibold">Delivered in 22 min</p></div>
           <span class="text-xs font-extrabold bg-[#D8FF3E] border border-[#111110] rounded-full px-2.5 py-1">$9</span>
         </div>
       </div>
       <div class="floaty absolute top-48 right-0 w-80 rounded-3xl overflow-hidden border-2 border-[#111110] sticker bg-white" style="--r:3deg; transform:rotate(3deg); animation-delay:.8s">
-        <img src="https://picsum.photos/seed/standqueue/600/500" class="w-full h-56 object-cover img-grade" alt="Queue spot" />
+        <img src="https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=800&q=80" class="w-full h-56 object-cover img-grade" alt="Sneaker drop queue" />
         <div class="p-4 flex items-center justify-between">
           <div><p class="font-extrabold text-sm leading-tight">Queued 2hrs for sneaker drop</p><p class="text-xs text-black/50 font-semibold">Video proof + receipt</p></div>
           <span class="text-xs font-extrabold bg-[#FF5C28] text-white border border-[#111110] rounded-full px-2.5 py-1">$14</span>
@@ -126,8 +123,8 @@ tailwind.config = {
 
     <!-- mobile collage fallback -->
     <div class="lg:hidden grid grid-cols-2 gap-3">
-      <img src="https://picsum.photos/seed/standparis/600/700" class="rounded-2xl border-2 border-[#111110] h-56 w-full object-cover" alt="" />
-      <img src="https://picsum.photos/seed/standqueue/600/500" class="rounded-2xl border-2 border-[#111110] h-56 w-full object-cover" alt="" />
+      <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&q=70" class="rounded-2xl border-2 border-[#111110] h-56 w-full object-cover" alt="Proposal in Paris" />
+      <img src="https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=600&q=70" class="rounded-2xl border-2 border-[#111110] h-56 w-full object-cover" alt="Sneaker queue" />
     </div>
   </section>
 
@@ -144,17 +141,17 @@ tailwind.config = {
   </div>
 
   <!-- INTEREST : gapless bento -->
-  <section id="money" class="py-32 md:py-48 px-5 md:px-12 max-w-7xl mx-auto">
+  <section id="money" class="py-32 md:py-48 px-5 md:px-12 max-w-7xl mx-auto scroll-mt-24">
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
       <h2 class="text-4xl md:text-6xl font-extrabold tracking-tight leading-[0.95] max-w-3xl">Stupid-simple jobs that
-        <span class="inline-block w-20 h-9 rounded-full align-middle bg-cover bg-center mx-1 border-2 border-[#111110]" style="background-image:url('https://picsum.photos/seed/crowdproof/300/150')"></span>
+        <span class="inline-block w-20 h-9 rounded-full align-middle bg-cover bg-center mx-1 border-2 border-[#111110]" style="background-image:url('https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=400&q=70')"></span>
         print money.</h2>
       <p class="max-w-sm font-medium text-black/55 leading-relaxed">No talent required. If you own a phone and can walk outside, you can earn today. Buyers pay first, money held until video lands.</p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-6 grid-flow-dense gap-4">
       <div data-action="open-job" role="button" tabindex="0" class="group md:col-span-4 rounded-3xl overflow-hidden relative bg-[#111110] text-white border-2 border-[#111110] min-h-[400px] flex cursor-pointer">
-        <img src="https://picsum.photos/seed/proofoffice/1200/800" class="absolute inset-0 w-full h-full object-cover opacity-70 img-grade group-hover:scale-105 transition-transform duration-700 ease-out" alt="" />
+        <img src="https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1200&q=80" class="absolute inset-0 w-full h-full object-cover opacity-70 img-grade group-hover:scale-105 transition-transform duration-700 ease-out" alt="City check at dusk" />
         <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent"></div>
         <div class="relative mt-auto p-8 w-full flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -174,7 +171,7 @@ tailwind.config = {
         <div class="bg-[#111110] text-white rounded-2xl p-4 text-sm font-bold flex justify-between"><span>Tonight in Lisbon</span><span class="text-[#D8FF3E]">€312 paid</span></div>
       </div>
       <div class="md:col-span-2 rounded-3xl bg-white border-2 border-[#111110] p-8 min-h-[360px] flex flex-col justify-between sticker overflow-hidden relative group">
-        <img src="https://picsum.photos/seed/hypeface/600/500" class="absolute inset-0 w-full h-full object-cover opacity-15 grayscale group-hover:scale-105 transition-transform duration-700 ease-out" alt="" />
+        <img src="https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=600&q=70" class="absolute inset-0 w-full h-full object-cover opacity-15 grayscale group-hover:scale-105 transition-transform duration-700 ease-out" alt="Hype crowd filming" />
         <div class="relative">
           <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#FF5C28]">Most gifted</p>
           <h3 class="text-2xl font-extrabold mt-2 leading-tight">Hype bundles</h3>
@@ -190,14 +187,14 @@ tailwind.config = {
           <button data-action="open-sales" class="mt-5 inline-block px-6 py-3 rounded-full bg-white text-black text-sm font-extrabold">Talk to sales →</button>
         </div>
         <div class="overflow-hidden rounded-2xl border-2 border-[#111110] h-60">
-          <img src="https://picsum.photos/seed/streetcrew/800/600" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" alt="" />
+          <img src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" alt="Street interviews" />
         </div>
       </div>
     </div>
   </section>
 
   <!-- BUILDER : price estimator -->
-  <section id="builder" class="py-32 md:py-48 px-5 md:px-12 max-w-6xl mx-auto">
+  <section id="builder" class="py-32 md:py-48 px-5 md:px-12 max-w-6xl mx-auto scroll-mt-24">
     <div class="bg-white border-2 border-[#111110] rounded-[2rem] p-8 md:p-14 shadow-[10px_10px_0_#111110] relative">
       <span class="tape">Try it — 20 seconds</span>
       <div class="grid md:grid-cols-2 gap-10 mt-4">
@@ -227,82 +224,41 @@ tailwind.config = {
               <span id="rushNote" class="text-sm font-bold text-white/40">standard</span>
             </div>
             <a href="#pricing" data-action="open-job" data-prefill="builder" class="mt-6 block text-center px-6 py-4 rounded-full bg-[#D8FF3E] text-black font-extrabold hover:brightness-110 transition-all">Post this job →</a>
+            <p class="text-center text-xs text-white/40 font-semibold mt-3">Doer gets $2.40 • we take $0.60</p>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- DESIRE : scrub reveal -->
-  <section class="py-32 md:py-48 px-6 bg-[#0B0B0D] text-[#F5F3EE] border-y-2 border-[#111110] relative overflow-hidden">
-    <div class="max-w-4xl mx-auto text-center relative">
-      <p class="text-[12px] uppercase tracking-[0.3em] text-white/40 mb-10">Why strangers beat apps</p>
-      <p id="scrubText" class="text-3xl md:text-5xl font-medium leading-[1.15] tracking-tight">
-        No review queue. No gig profile. Just a human, a phone, and eleven minutes between your ask and your video.
-      </p>
-    </div>
-  </section>
-
-  <!-- DESIRE : pinned split -->
-  <section id="how" class="py-32 md:py-48 px-5 md:px-12 max-w-7xl mx-auto grid md:grid-cols-[1fr_1.2fr] gap-12">
+  <!-- DESIRE : pinned live jobs -->
+  <section id="live" class="py-32 md:py-48 px-5 md:px-12 max-w-7xl mx-auto grid md:grid-cols-[1fr_1.2fr] gap-12 scroll-mt-24">
     <div class="md:sticky md:top-28 self-start">
-      <h2 class="text-4xl md:text-6xl font-extrabold tracking-tight leading-[0.92]">How money<br/>moves in<br/><span class="text-[#FF5C28]">this market.</span></h2>
-      <p class="mt-6 font-medium text-black/55 max-w-sm">Buyers pay first. Doers keep 80% of every unlock. Payouts land every Friday.</p>
-      <div class="mt-8 rounded-2xl bg-white border-2 border-[#111110] p-6 sticker">
-        <label class="text-xs font-extrabold uppercase tracking-[0.2em] text-black/40">Doer calculator — jobs per week: <span id="jobN" class="text-black">10</span></label>
-        <input id="earnRange" type="range" min="2" max="60" value="10" class="w-full mt-3" />
-        <p class="font-extrabold text-2xl mt-2">You keep <span id="earnOut" class="bg-[#D8FF3E] px-2 border border-[#111110] rounded-lg">$48</span>/week <span class="text-sm font-bold opacity-50">at $6 avg × 80% — <span id="listenOut">from 10 jobs</span></span></p>
+      <h2 class="text-4xl md:text-6xl font-extrabold tracking-tight leading-[0.92]">The feed<br/>never<br/>sleeps.</h2>
+      <p class="mt-6 font-medium text-black/55 max-w-sm">Every job is real, paid upfront, and finished on video. This is what the last hour looked like.</p>
+      <div class="mt-8 bg-[#111110] text-white rounded-2xl p-6 flex items-center justify-between">
+        <div><p id="paidOut" class="text-4xl font-extrabold text-[#D8FF3E]">$18,204</p><p class="text-xs font-bold uppercase tracking-[0.18em] text-white/40">paid to doers today</p></div>
+        <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
       </div>
-    </div>
-    <div class="space-y-6">
-      <div class="scale-fade-img overflow-hidden rounded-3xl border-2 border-[#111110] h-[420px] relative group">
-        <img src="https://picsum.photos/seed/nightrail/1000/800" class="w-full h-full object-cover img-grade group-hover:scale-105 transition-transform duration-700 ease-out" alt="Night rail" />
-        <div class="absolute bottom-0 inset-x-0 p-7 bg-gradient-to-t from-black/80 to-transparent text-white flex justify-between items-end">
-          <div><p class="font-extrabold text-xl">1. Ask in one sentence</p><p class="text-white/60 text-sm">Typed in seconds, priced instantly</p></div>
-          <span class="text-xs px-4 py-2 rounded-full bg-white/10 border border-white/20">30 sec</span>
-        </div>
-      </div>
-      <div class="scale-fade-img overflow-hidden rounded-3xl border-2 border-[#111110] h-[420px] relative group">
-        <img src="https://picsum.photos/seed/fogpier/1000/800" class="w-full h-full object-cover img-grade group-hover:scale-105 transition-transform duration-700 ease-out" alt="Fog pier" />
-        <div class="absolute bottom-0 inset-x-0 p-7 bg-gradient-to-t from-black/80 to-transparent text-white flex justify-between items-end">
-          <div><p class="font-extrabold text-xl">2. A human claims it</p><p class="text-white/60 text-sm">First verified doer nearby wins</p></div>
-          <span class="text-xs px-4 py-2 rounded-full bg-[#D8FF3E] text-black font-extrabold">~11 min</span>
-        </div>
-      </div>
-      <div class="scale-fade-img overflow-hidden rounded-3xl border-2 border-[#111110] h-[420px] relative group">
-        <img src="https://picsum.photos/seed/desertstop/1000/800" class="w-full h-full object-cover img-grade group-hover:scale-105 transition-transform duration-700 ease-out" alt="Desert stop" />
-        <div class="absolute bottom-0 inset-x-0 p-7 bg-gradient-to-t from-black/80 to-transparent text-white flex justify-between items-end">
-          <div><p class="font-extrabold text-xl">3. Video lands, doer paid</p><p class="text-white/60 text-sm">Approve to release the 80%</p></div>
-          <span class="text-xs px-4 py-2 rounded-full bg-white text-black font-extrabold">Done</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- DESIRE : live feed -->
-  <section id="live" class="py-32 md:py-48 px-5 md:px-12 max-w-7xl mx-auto">
-    <div class="flex items-end justify-between mb-10">
-      <h2 class="text-4xl md:text-6xl font-extrabold tracking-tight">The feed<br/>never sleeps.</h2>
-      <span class="text-xs font-extrabold px-3 py-1.5 rounded-full bg-white border-2 border-[#111110]"><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1.5"></span>demo feed</span>
     </div>
     <div class="space-y-4" id="jobFeed">
       <div class="scale-fade-img group bg-white border-2 border-[#111110] rounded-3xl overflow-hidden flex gap-4 p-4 items-center">
-        <img src="https://picsum.photos/seed/jobtokyo/400/400" class="w-28 h-28 rounded-2xl object-cover border border-[#111110] group-hover:scale-105 transition-transform duration-700 ease-out" alt="" />
+        <img src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=400&q=70" class="w-28 h-28 rounded-2xl object-cover border border-[#111110] group-hover:scale-105 transition-transform duration-700 ease-out" alt="Shibuya crossing job" />
         <div class="flex-1"><p class="font-extrabold">Write "MARRY ME ANA" in Shibuya crossing</p><p class="text-sm font-semibold text-black/50">Tokyo • delivered in 11 min • video 0:47</p></div>
         <span class="font-extrabold text-sm bg-[#D8FF3E] border border-[#111110] rounded-full px-3 py-1.5">$9</span>
       </div>
       <div class="scale-fade-img group bg-white border-2 border-[#111110] rounded-3xl overflow-hidden flex gap-4 p-4 items-center">
-        <img src="https://picsum.photos/seed/jobbar/400/400" class="w-28 h-28 rounded-2xl object-cover border border-[#111110] group-hover:scale-105 transition-transform duration-700 ease-out" alt="" />
+        <img src="https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=400&q=70" class="w-28 h-28 rounded-2xl object-cover border border-[#111110] group-hover:scale-105 transition-transform duration-700 ease-out" alt="Bar line check at night" />
         <div class="flex-1"><p class="font-extrabold">Is Berghain line shorter than 1hr right now?</p><p class="text-sm font-semibold text-black/50">Berlin • delivered in 6 min • video 0:32</p></div>
         <span class="font-extrabold text-sm bg-white border border-[#111110] rounded-full px-3 py-1.5">$5</span>
       </div>
       <div class="scale-fade-img group bg-white border-2 border-[#111110] rounded-3xl overflow-hidden flex gap-4 p-4 items-center">
-        <img src="https://picsum.photos/seed/jobsing/400/400" class="w-28 h-28 rounded-2xl object-cover border border-[#111110] group-hover:scale-105 transition-transform duration-700 ease-out" alt="" />
+        <img src="https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=400&q=70" class="w-28 h-28 rounded-2xl object-cover border border-[#111110] group-hover:scale-105 transition-transform duration-700 ease-out" alt="Hype videos" />
         <div class="flex-1"><p class="font-extrabold">10 hype videos before my driving test</p><p class="text-sm font-semibold text-black/50">Lagos • delivered in 19 min • 10 videos</p></div>
         <span class="font-extrabold text-sm bg-[#FF5C28] text-white border border-[#111110] rounded-full px-3 py-1.5">$4</span>
       </div>
       <div class="scale-fade-img group bg-white border-2 border-[#111110] rounded-3xl overflow-hidden flex gap-4 p-4 items-center">
-        <img src="https://picsum.photos/seed/jobdog/400/400" class="w-28 h-28 rounded-2xl object-cover border border-[#111110] group-hover:scale-105 transition-transform duration-700 ease-out" alt="" />
+        <img src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=400&q=70" class="w-28 h-28 rounded-2xl object-cover border border-[#111110] group-hover:scale-105 transition-transform duration-700 ease-out" alt="Dog walking" />
         <div class="flex-1"><p class="font-extrabold">Walk my dog virtually, tell him I miss him</p><p class="text-sm font-semibold text-black/50">Austin • delivered in 14 min • video 1:12</p></div>
         <span class="font-extrabold text-sm bg-[#7AB8FF] border border-[#111110] rounded-full px-3 py-1.5">$6</span>
       </div>
@@ -316,7 +272,7 @@ tailwind.config = {
     <p class="font-medium text-black/55 mb-10 max-w-xl">Hover each lane. If you recognise yourself, you are the mass market.</p>
     <div class="flex flex-col md:flex-row gap-3 h-auto md:h-[520px]">
       <div class="accordion-slice group relative rounded-3xl overflow-hidden min-h-[240px] border-2 border-[#111110]">
-        <img src="https://picsum.photos/seed/lanestudent/600/900" class="absolute inset-0 w-full h-full object-cover" alt="" />
+        <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=600&h=900&q=80" class="absolute inset-0 w-full h-full object-cover" alt="Students" />
         <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent"></div>
         <div class="absolute bottom-0 p-7 text-white">
           <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#D8FF3E]">Students</p>
@@ -325,7 +281,7 @@ tailwind.config = {
         </div>
       </div>
       <div class="accordion-slice group relative rounded-3xl overflow-hidden min-h-[240px] border-2 border-[#111110]">
-        <img src="https://picsum.photos/seed/lanelove/600/900" class="absolute inset-0 w-full h-full object-cover" alt="" />
+        <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&h=900&q=80" class="absolute inset-0 w-full h-full object-cover" alt="Romantics" />
         <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent"></div>
         <div class="absolute bottom-0 p-7 text-white">
           <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#FF5C28]">Romantics</p>
@@ -334,7 +290,7 @@ tailwind.config = {
         </div>
       </div>
       <div class="accordion-slice group relative rounded-3xl overflow-hidden min-h-[240px] border-2 border-[#111110]">
-        <img src="https://picsum.photos/seed/lanetravel/600/900" class="absolute inset-0 w-full h-full object-cover" alt="" />
+        <img src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=600&h=900&q=80" class="absolute inset-0 w-full h-full object-cover" alt="Travelers" />
         <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent"></div>
         <div class="absolute bottom-0 p-7 text-white">
           <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#7AB8FF]">Travelers</p>
@@ -343,7 +299,7 @@ tailwind.config = {
         </div>
       </div>
       <div class="accordion-slice group relative rounded-3xl overflow-hidden min-h-[240px] border-2 border-[#111110]">
-        <img src="https://picsum.photos/seed/lanebrand/600/900" class="absolute inset-0 w-full h-full object-cover" alt="" />
+        <img src="https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=600&h=900&q=80" class="absolute inset-0 w-full h-full object-cover" alt="Brands" />
         <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent"></div>
         <div class="absolute bottom-0 p-7 text-white">
           <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#D8FF3E]">Brands</p>
@@ -357,29 +313,34 @@ tailwind.config = {
   <!-- STACK : trust -->
   <section class="py-32 md:py-48 px-5 md:px-12 max-w-4xl mx-auto">
     <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight text-center mb-14">Wild, but not sketchy.</h2>
-    <div class="space-y-6">
-      <div class="stack-card rounded-3xl bg-[#F5F3EE] text-[#08080A] p-8 md:p-12 border-2 border-[#111110] shadow-[8px_8px_0_rgba(17,17,16,.2)]">
-        <p class="text-xs font-extrabold uppercase tracking-[0.2em] opacity-50">Promise one</p>
-        <h3 class="text-3xl font-extrabold mt-2">No feed. No autoplay next.</h3>
-        <p class="mt-3 opacity-70 font-medium">You choose a job, a doer films it, it ends. We never nudge anyone to stay. Our business is endings, not addiction.</p>
-      </div>
+    <div class="space-y-5">
       <div class="stack-card rounded-3xl bg-[#111110] text-white p-8 md:p-12 border-2 border-[#111110] shadow-[8px_8px_0_rgba(17,17,16,.2)]">
-        <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#D8FF3E]">Promise two</p>
-        <h3 class="text-3xl font-extrabold mt-2">ID-checked or it ships back.</h3>
-        <p class="mt-3 text-white/60 font-medium">Every doer passes ID + selfie before their first claim. Public places only, always.</p>
+        <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#D8FF3E]">Safety first</p>
+        <h3 class="text-3xl font-extrabold mt-2">ID-checked humans, escrowed money.</h3>
+        <p class="mt-3 text-white/60 font-medium">Every doer passes ID + selfie. Buyers pay upfront into holding. No video, automatic refund. No addresses, no meetups, public places only.</p>
+      </div>
+      <div class="stack-card rounded-3xl bg-white p-8 md:p-12 border-2 border-[#111110] shadow-[8px_8px_0_#111110]">
+        <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#FF5C28]">Anti-creep design</p>
+        <h3 class="text-3xl font-extrabold mt-2">Legal-only menu, human review.</h3>
+        <p class="mt-3 text-black/55 font-medium">Jobs are picked from a fixed menu with hard boundaries. Our moderators reject anything grey in under 4 minutes, 24/7.</p>
       </div>
       <div class="stack-card rounded-3xl bg-[#D8FF3E] p-8 md:p-12 border-2 border-[#111110] shadow-[8px_8px_0_#111110]">
-        <p class="text-xs font-extrabold uppercase tracking-[0.2em] opacity-60">Promise three</p>
-        <h3 class="text-3xl font-extrabold mt-2">Money held, never taken.</h3>
-        <p class="mt-3 font-medium opacity-70">Escrow on every order. No video, automatic refund. Cancel anytime before pickup.</p>
+        <p class="text-xs font-extrabold uppercase tracking-[0.2em] opacity-60">Scale math</p>
+        <h3 class="text-3xl font-extrabold mt-2">20% take, infinite shelf.</h3>
+        <p class="mt-3 font-medium opacity-70">We hold no inventory. Every city that joins makes the product better. 1M jobs at $6 average = $1.2M net on an 8-person team.</p>
       </div>
     </div>
   </section>
 
   <!-- ACTION : pricing -->
-  <section id="pricing" class="py-32 md:py-48 px-5 md:px-12 max-w-7xl mx-auto">
+  <section id="pricing" class="py-32 md:py-48 px-5 md:px-12 max-w-7xl mx-auto scroll-mt-24">
     <div class="text-center mb-12">
       <h2 class="text-4xl md:text-6xl font-extrabold tracking-tight">Cheap to try.<br/>Stupid not to sell.</h2>
+      <div class="mt-8 max-w-xl mx-auto bg-white border-2 border-[#111110] rounded-2xl p-5 sticker">
+        <label class="text-xs font-extrabold uppercase tracking-[0.18em] opacity-50">Doer calculator — jobs per week: <span id="jobN" class="text-black">10</span></label>
+        <input id="jobRange" type="range" min="2" max="60" value="10" class="w-full mt-3" />
+        <p class="font-extrabold text-2xl mt-2">You keep <span id="keepOut" class="bg-[#D8FF3E] px-2 border border-[#111110] rounded-lg">$48</span>/week <span class="text-sm font-bold opacity-50">at $6 avg × 80%</span></p>
+      </div>
     </div>
     <div class="grid md:grid-cols-3 gap-5 items-stretch">
       <div class="rounded-3xl bg-white border-2 border-[#111110] p-8 flex flex-col sticker">
@@ -421,9 +382,9 @@ tailwind.config = {
       <p class="font-medium text-black/40 text-sm mt-4 max-w-xs">Humans on demand. Legal only. 41 countries and one very tired pigeon in Trafalgar Square.</p>
     </div>
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-10 text-sm font-bold">
-      <div class="space-y-3"><p class="text-black/30 uppercase tracking-[0.18em] text-xs">Ask</p><a href="#builder" class="block">Price it</a><a href="#live" class="block">Live jobs</a><a href="#pricing" class="block">Standin+</a></div>
-      <div class="space-y-3"><p class="text-black/30 uppercase tracking-[0.18em] text-xs">Earn</p><a href="#" class="block">Become a doer</a><a href="#" class="block">City leaderboards</a><a href="#" class="block">Payouts</a></div>
-      <div class="space-y-3"><p class="text-black/30 uppercase tracking-[0.18em] text-xs">Company</p><a href="#" class="block">Safety</a><a href="#" class="block">Contact</a><a href="#" class="block">Terms</a></div>
+      <div class="space-y-3"><p class="text-black/30 uppercase tracking-[0.18em] text-xs">Ask</p><a href="#builder" class="block">Price it</a><a href="./orders.html" class="block">My orders</a><a href="#live" class="block">Live jobs</a><a href="#pricing" class="block">Standin+</a></div>
+      <div class="space-y-3"><p class="text-black/30 uppercase tracking-[0.18em] text-xs">Earn</p><a href="./doer.html" class="block">Become a doer</a><button data-action="open-boards" class="block hover:underline underline-offset-4">City leaderboards</button><button data-action="open-payouts" class="block hover:underline underline-offset-4">Payouts</button></div>
+      <div class="space-y-3"><p class="text-black/30 uppercase tracking-[0.18em] text-xs">Company</p><button data-action="open-safety" class="block hover:underline underline-offset-4">Safety</button><button data-action="open-contact" class="block hover:underline underline-offset-4">Contact</button><button data-action="open-terms" class="block hover:underline underline-offset-4">Terms</button></div>
     </div>
   </footer>
 
@@ -444,10 +405,21 @@ tailwind.config = {
       </div>
       <form id="jobForm" class="mt-6 space-y-4">
         <input id="fTitle" class="field" maxlength="90" placeholder="What should a human do? e.g. Film snow on my street" />
+        <textarea id="fDesc" class="field" rows="2" maxlength="500" placeholder="Details for your doer: exactly what to film, where, what to say (optional)"></textarea>
         <div class="grid grid-cols-2 gap-3">
           <select id="fCat" class="field"><option value="3">Wake-up roast — $3</option><option value="5" selected>Place check — $5</option><option value="4">Hype bundle — $4</option><option value="6">Practice pitch — $6</option><option value="9">Proposal filming — $9</option><option value="14">Queue / errand — $14</option></select>
-          <select id="fCity" class="field"><option>Lisbon</option><option>Berlin</option><option>Tokyo</option><option>Lagos</option><option>Austin</option><option>Paris</option><option>Oslo</option><option>Rotterdam</option></select>
+          <select id="fCity" class="field">
+            <optgroup label="Europe"><option>Lisbon</option><option>Berlin</option><option>Paris</option><option>Oslo</option><option>Rotterdam</option><option>London</option><option>Barcelona</option></optgroup>
+            <optgroup label="Asia"><option>Tokyo</option><option>Osaka</option><option>Seoul</option><option>Bangkok</option><option>Singapore</option><option>Mumbai</option><option>Delhi</option><option>Bengaluru</option><option>Hyderabad</option><option>Jaipur</option><option>Goa</option><option>Hong Kong</option><option>Taipei</option><option>Kuala Lumpur</option><option>Hanoi</option><option>Manila</option><option>Jakarta</option><option>Dubai</option></optgroup>
+            <optgroup label="Americas"><option>New York</option><option>Los Angeles</option><option>Austin</option><option>Chicago</option><option>Miami</option><option>San Francisco</option><option>Seattle</option><option>Toronto</option><option>Vancouver</option><option>Mexico City</option><option>São Paulo</option></optgroup>
+            <optgroup label="Africa & Oceania"><option>Lagos</option><option>Cairo</option><option>Cape Town</option><option>Sydney</option></optgroup>
+          </select>
         </div>
+        <div class="grid grid-cols-2 gap-3">
+          <select id="fWhen" class="field"><option value="asap">Needed: ASAP</option><option value="24h">Needed: within 24h</option><option value="week">Needed: this week</option></select>
+          <select id="fLen" class="field"><option value="0:45">Video: ~45 sec</option><option value="1:30" selected>Video: ~90 sec</option><option value="3:00">Video: ~3 min</option></select>
+        </div>
+        <p id="jobScan" class="text-xs font-bold text-black/40">Every post is auto-scanned: public places, no contact details.</p>
         <label class="flex items-center justify-between font-extrabold text-sm bg-white border-2 border-[#111110] rounded-2xl px-4 py-3">Rush — picked up in under 1hr (+$2)<input id="fRush" type="checkbox" class="w-5 h-5 accent-black" /></label>
         <div class="bg-[#111110] text-white rounded-2xl p-5 flex items-center justify-between">
           <div><p class="text-xs font-extrabold uppercase tracking-[0.18em] text-white/40">You pay</p><p id="jobPriceOut" class="text-4xl font-extrabold text-[#D8FF3E]">$5</p></div>
@@ -464,7 +436,12 @@ tailwind.config = {
       <div class="flex gap-2 mt-5"><span id="dDot1" class="step-dot on flex-1 h-2 rounded-full"></span><span id="dDot2" class="step-dot flex-1 h-2 rounded-full"></span><span id="dDot3" class="step-dot flex-1 h-2 rounded-full"></span></div>
       <div id="doerStep1" class="mt-6 space-y-3">
         <input id="dName" class="field" placeholder="Display name e.g. Marta" />
-        <select id="dCity" class="field"><option>Lisbon</option><option>Berlin</option><option>Tokyo</option><option>Lagos</option><option>Austin</option><option>Paris</option></select>
+        <select id="dCity" class="field">
+          <optgroup label="Europe"><option>Lisbon</option><option>Berlin</option><option>Paris</option><option>London</option></optgroup>
+          <optgroup label="Asia"><option>Tokyo</option><option>Seoul</option><option>Bangkok</option><option>Singapore</option><option>Mumbai</option><option>Delhi</option><option>Dubai</option></optgroup>
+          <optgroup label="Americas"><option>New York</option><option>Los Angeles</option><option>Austin</option><option>Toronto</option><option>São Paulo</option></optgroup>
+          <optgroup label="Africa & Oceania"><option>Lagos</option><option>Sydney</option></optgroup>
+        </select>
         <button data-action="doer-next-2" class="w-full px-6 py-4 rounded-full bg-[#111110] text-white font-extrabold">Continue →</button>
       </div>
       <div id="doerStep2" class="modal-hidden mt-6 space-y-3">
@@ -479,20 +456,27 @@ tailwind.config = {
       </div>
     </div>
 
-    <!-- LOGIN -->
+    <!-- LOGIN : real accounts when the API is up, device fallback offline -->
     <div id="loginModal" class="modal-hidden w-full max-w-md bg-white border-2 border-[#111110] rounded-3xl p-7 shadow-[10px_10px_0_#111110]">
-      <div class="flex items-start justify-between"><h3 class="text-2xl font-extrabold">Log in</h3><button data-action="close" class="w-10 h-10 rounded-full border-2 border-[#111110] font-extrabold">×</button></div>
-      <form id="loginForm" class="mt-5 space-y-3">
-        <input id="lName" class="field" placeholder="Your name" />
+      <div class="flex items-start justify-between"><h3 id="authTitle" class="text-2xl font-extrabold">Log in</h3><button data-action="close" class="w-10 h-10 rounded-full border-2 border-[#111110] font-extrabold">×</button></div>
+      <div class="grid grid-cols-2 gap-2 mt-4">
+        <button id="tabLogin" class="px-4 py-2.5 rounded-full bg-[#111110] text-white text-sm font-extrabold">Log in</button>
+        <button id="tabRegister" class="px-4 py-2.5 rounded-full border-2 border-[#111110] text-sm font-extrabold">Create account</button>
+      </div>
+      <form id="loginForm" class="mt-4 space-y-3">
+        <input id="lName" class="field" placeholder="Display name" />
+        <input id="lEmail" type="email" class="field" placeholder="Email" />
+        <input id="lPassword" type="password" class="field" placeholder="Password (8+ characters)" />
         <input id="lCity" class="field" placeholder="City e.g. Berlin" />
-        <button class="w-full px-6 py-4 rounded-full bg-[#111110] text-white font-extrabold">Continue →</button>
-        <p class="text-xs font-semibold text-black/40 text-center">Demo auth — stored only in your browser.</p>
+        <button id="authBtn" class="w-full px-6 py-4 rounded-full bg-[#111110] text-white font-extrabold">Log in →</button>
+        <p id="authErr" class="hidden text-sm font-bold text-red-700 bg-red-50 border-2 border-red-200 rounded-2xl px-4 py-3"></p>
+        <p id="authNote" class="text-xs font-semibold text-black/40 text-center">Accounts sync across every device.</p>
       </form>
     </div>
 
     <!-- STANDIN+ CHECKOUT -->
     <div id="plusModal" class="modal-hidden w-full max-w-md bg-[#111110] text-white border-2 border-[#111110] rounded-3xl p-7 shadow-[10px_10px_0_#D8FF3E]">
-      <div class="flex items-start justify-between"><div><h3 class="text-2xl font-extrabold">Standin+ — $12/mo</h3><p class="text-sm font-semibold text-white/50">Unlimited asks, priority pickup, free rush hours.</p></div><button data-action="close" class="w-10 h-10 rounded-full border-2 border-white/30 font-extrabold">×</button></div>
+      <div class="flex items-start justify-between"><div><h3 class="text-2xl font-extrabold">Standin+ — $12/mo</h3><p class="text-sm font-semibold text-white/50">Unlimited asks. Cancel anytime.</p></div><button data-action="close" class="w-10 h-10 rounded-full border-2 border-white/30 font-extrabold">×</button></div>
       <form id="plusForm" class="mt-5 space-y-3">
         <input id="cCard" inputmode="numeric" class="field !bg-white" placeholder="Card 4242 4242 4242 4242" />
         <div class="grid grid-cols-2 gap-3"><input class="field !bg-white" placeholder="12 / 28" /><input class="field !bg-white" placeholder="CVC" /></div>
@@ -511,17 +495,84 @@ tailwind.config = {
       </form>
     </div>
 
+    <!-- LEADERBOARDS -->
+    <div id="boardsModal" class="modal-hidden w-full max-w-lg bg-[#FFF8EC] border-2 border-[#111110] rounded-3xl p-7 shadow-[10px_10px_0_#111110] max-h-[90vh] overflow-y-auto">
+      <div class="flex items-start justify-between"><div><h3 class="text-2xl font-extrabold">City leaderboards</h3><p class="text-sm font-semibold text-black/50">Ranked from orders on this device. Live network board ships with accounts.</p></div><button data-action="close" class="w-10 h-10 rounded-full border-2 border-[#111110] font-extrabold shrink-0">×</button></div>
+      <div id="boardsBody" class="mt-5 space-y-4"></div>
+    </div>
+
+    <!-- PAYOUTS -->
+    <div id="payoutsModal" class="modal-hidden w-full max-w-lg bg-[#FFF8EC] border-2 border-[#111110] rounded-3xl p-7 shadow-[10px_10px_0_#111110] max-h-[90vh] overflow-y-auto">
+      <div class="flex items-start justify-between"><div><h3 class="text-2xl font-extrabold">Payouts</h3><p class="text-sm font-semibold text-black/50">Doers keep 80% of every order. Paid every Friday.</p></div><button data-action="close" class="w-10 h-10 rounded-full border-2 border-[#111110] font-extrabold shrink-0">×</button></div>
+      <div id="payoutBody" class="mt-5 space-y-3"></div>
+    </div>
+
+    <!-- SAFETY -->
+    <div id="safetyModal" class="modal-hidden w-full max-w-lg bg-[#FFF8EC] border-2 border-[#111110] rounded-3xl p-7 shadow-[10px_10px_0_#111110] max-h-[90vh] overflow-y-auto">
+      <div class="flex items-start justify-between"><div><h3 class="text-2xl font-extrabold">Safety</h3><p class="text-sm font-semibold text-black/50">How we keep strangers safe — and how to reach us.</p></div><button data-action="close" class="w-10 h-10 rounded-full border-2 border-[#111110] font-extrabold shrink-0">×</button></div>
+      <div class="mt-5 space-y-3 text-sm font-medium">
+        <div class="bg-white border-2 border-[#111110] rounded-2xl p-4"><p class="font-extrabold">ID-checked humans</p><p class="text-black/55">Every doer passes an ID + selfie check before their first claim.</p></div>
+        <div class="bg-white border-2 border-[#111110] rounded-2xl p-4"><p class="font-extrabold">Money in escrow</p><p class="text-black/55">Buyers pay upfront into holding. No video, automatic refund — the doer never sees your card.</p></div>
+        <div class="bg-white border-2 border-[#111110] rounded-2xl p-4"><p class="font-extrabold">Human moderation, 24/7</p><p class="text-black/55">Grey-area jobs are rejected in minutes. Public places only — never addresses or meetups.</p></div>
+      </div>
+      <form id="safetyForm" class="mt-5 space-y-3">
+        <p class="font-extrabold text-sm">Report a problem</p>
+        <input id="repSubject" class="field" maxlength="120" placeholder="Subject e.g. Doer asked for my address" />
+        <textarea id="repMessage" class="field" rows="3" maxlength="2000" placeholder="What happened? (10+ characters)"></textarea>
+        <input id="repContact" class="field" maxlength="120" placeholder="Your email so we can follow up (optional)" />
+        <p id="repErr" class="hidden text-sm font-bold text-red-600"></p>
+        <button class="w-full px-6 py-3.5 rounded-full bg-[#111110] text-white font-extrabold">Send report →</button>
+      </form>
+      <div id="myReports" class="mt-4 space-y-2"></div>
+    </div>
+
+    <!-- CONTACT -->
+    <div id="contactModal" class="modal-hidden w-full max-w-md bg-white border-2 border-[#111110] rounded-3xl p-7 shadow-[10px_10px_0_#111110]">
+      <div class="flex items-start justify-between"><h3 class="text-2xl font-extrabold">Contact</h3><button data-action="close" class="w-10 h-10 rounded-full border-2 border-[#111110] font-extrabold">×</button></div>
+      <form id="contactForm" class="mt-5 space-y-3">
+        <input id="conEmail" type="email" class="field" maxlength="120" placeholder="Your email" />
+        <input id="conSubject" class="field" maxlength="120" placeholder="Subject" />
+        <textarea id="conMessage" class="field" rows="4" maxlength="2000" placeholder="How can we help? (10+ characters)"></textarea>
+        <p id="conErr" class="hidden text-sm font-bold text-red-600"></p>
+        <button class="w-full px-6 py-4 rounded-full bg-[#111110] text-white font-extrabold">Send message →</button>
+        <p class="text-xs font-semibold text-black/40 text-center">We answer within one business day.</p>
+      </form>
+    </div>
+
+    <!-- TERMS -->
+    <div id="termsModal" class="modal-hidden w-full max-w-lg bg-[#FFF8EC] border-2 border-[#111110] rounded-3xl p-7 shadow-[10px_10px_0_#111110] max-h-[90vh] overflow-y-auto">
+      <div class="flex items-start justify-between"><div><h3 class="text-2xl font-extrabold">Terms</h3><p class="text-sm font-semibold text-black/50">Effective 1 Sep 2026. Plain words, no traps.</p></div><button data-action="close" class="w-10 h-10 rounded-full border-2 border-[#111110] font-extrabold shrink-0">×</button></div>
+      <div class="mt-5 space-y-3 text-sm font-medium text-black/70 leading-relaxed">
+        <p><b class="text-black">1. The deal.</b> Askers pay doers to film legal, public-place tasks on video. Every order shows its total upfront — no hidden fees, ever.</p>
+        <p><b class="text-black">2. Our cut.</b> 20% platform fee on completed orders (80% to the doer), 50% of location licenses. Subscriptions are monthly, cancel anytime in two taps.</p>
+        <p><b class="text-black">3. Escrow + refunds.</b> Payment is held until delivery. No video, or no pickup: automatic full refund. Cancel an open order anytime for an instant refund.</p>
+        <p><b class="text-black">4. Payouts.</b> Doer earnings release on asker approval and batch every Friday via Stripe. Missed payouts earn the next month free.</p>
+        <p><b class="text-black">5. Acceptable use.</b> Legal tasks only, public places only. No addresses, meetups, harassment, or anything requiring breaking rules. Violations end accounts.</p>
+        <p><b class="text-black">6. Content.</b> Doers grant buyers a personal license to their delivered video; brands need a licensing plan for commercial reuse.</p>
+        <p><b class="text-black">7. Accounts.</b> One account per human, keep credentials secret. We may suspend accounts for fraud, chargebacks abuse, or safety violations.</p>
+        <p><b class="text-black">8. Liability.</b> The platform connects humans; doers act independently. Liability is capped at the fees paid in the prior 12 months.</p>
+        <p><b class="text-black">9. Changes.</b> Material changes get 14 days notice in-app. Continued use means acceptance.</p>
+      </div>
+    </div>
+
     <!-- MY JOBS -->
     <div id="myjobsModal" class="modal-hidden w-full max-w-lg bg-[#FFF8EC] border-2 border-[#111110] rounded-3xl p-7 shadow-[10px_10px_0_#111110] max-h-[90vh] overflow-y-auto">
       <div class="flex items-start justify-between"><div><h3 class="text-2xl font-extrabold">My jobs</h3><p class="text-sm font-semibold text-black/50">Posted on this device. Cancel refunds escrow instantly.</p></div><button data-action="close" class="w-10 h-10 rounded-full border-2 border-[#111110] font-extrabold">×</button></div>
       <div id="myJobsList" class="mt-5 space-y-3"></div>
+      <div class="mt-5 flex items-center justify-between gap-3">
+        <a href="./orders.html" class="text-sm font-extrabold underline underline-offset-4">Open full dashboard →</a>
+        <button data-action="logout" class="text-sm font-bold text-black/40 hover:text-black">Log out</button>
+      </div>
     </div>
   </div>
 
   <div id="toastRoot" class="fixed bottom-4 right-4 z-[130] space-y-2 w-[calc(100%-2rem)] max-w-sm"></div>
 </main>
 
+<script src="./api-bridge.js?v=4"></script>
 <script>
+// Motion is progressive enhancement — the page works fully without the CDN.
+if (window.gsap && window.ScrollTrigger) {
 gsap.registerPlugin(ScrollTrigger);
 
 // Hero entrance
@@ -538,20 +589,7 @@ document.querySelectorAll(".stack-card").forEach((card) => {
   gsap.from(card, { y: 50, scale: 0.97, ease: "power2.out",
     scrollTrigger: { trigger: card, start: "top 92%" } });
 });
-
-// Scrub text reveal
-(function(){
-  const el = document.getElementById("scrubText");
-  const words = el.innerText.split(" ");
-  el.innerHTML = words.map(w => `<span class="reveal-word">${w}</span>`).join(" ");
-  const style = document.createElement("style");
-  style.textContent = ".reveal-word{opacity:0.1;display:inline-block}";
-  document.head.appendChild(style);
-  gsap.to(".reveal-word", {
-    opacity: 1, stagger: 0.06, ease: "none",
-    scrollTrigger: { trigger: el, start: "top 80%", end: "bottom 45%", scrub: 1 }
-  });
-})();
+}
 
 // Builder logic
 const btns = document.querySelectorAll(".job-btn");
@@ -578,14 +616,12 @@ askInput.addEventListener("input", () => { if(askInput.value.trim().length > 3) 
 renderPrice();
 
 // Earnings calculator
-const jobRange = document.getElementById("earnRange");
-const keepOut = document.getElementById("earnOut");
+const jobRange = document.getElementById("jobRange");
+const keepOut = document.getElementById("keepOut");
 const jobN = document.getElementById("jobN");
-const listenOut = document.getElementById("listenOut");
 jobRange.addEventListener("input", () => {
   jobN.textContent = jobRange.value;
   keepOut.textContent = "$" + Math.round(parseInt(jobRange.value,10) * 6 * 0.8);
-  listenOut.textContent = "from " + jobRange.value + " jobs";
 });
 
 // Fake live ticker + counter
@@ -596,25 +632,58 @@ const lines = [
   'Luis just delivered "hold my spot at DMV" — $14, 2hrs',
   'Nora just claimed "film snow on my street" — $3'
 ];
-let li = 0;
+let li = 0, paid = 18204;
 setInterval(() => {
   li = (li + 1) % lines.length;
   document.getElementById("liveLine").textContent = lines[li];
+  paid += Math.floor(Math.random() * 14) + 3;
+  document.getElementById("paidOut").textContent = "$" + paid.toLocaleString();
 }, 3200);
+</script>
+
 <script>
 (function(){
   const $ = (s) => document.querySelector(s);
+  const backdrop = $("#modalBackdrop");
+  const panels = ["jobModal","doerModal","loginModal","plusModal","salesModal","myjobsModal","boardsModal","payoutsModal","safetyModal","contactModal","termsModal"];
   const store = {
     load(){ try { return JSON.parse(localStorage.getItem("standin_v1")) || { user:null, plan:"free", doer:null, jobs:[] }; } catch(e){ return { user:null, plan:"free", doer:null, jobs:[] }; } },
     save(s){ localStorage.setItem("standin_v1", JSON.stringify(s)); }
   };
   let state = store.load();
-  const backdrop = $("#modalBackdrop");
-  const panels = ["jobModal","doerModal","loginModal","plusModal","salesModal","myjobsModal"];
+
+  // Live backend sync (graceful): hydrate the feed when the API is up.
+  // Remote orders are claimable too — claiming mirrors them locally first.
+  const remoteCache = new Map();
+  function prependRemote(item){
+    if(item.status !== "open") return;
+    if(state.jobs.some((j) => j.backendId === item.id)) return;
+    if(document.querySelector('[data-job-id="' + item.id + '"]')) return;
+    remoteCache.set(item.id, item);
+    const feed = document.getElementById("jobFeed");
+    feed.insertBefore(
+      jobCard({ id: item.id, title: item.title, city: item.city, price: item.total, status: "open" }),
+      document.getElementById("liveFeedBox")
+    );
+  }
+  if (window.StandinBridge) {
+    window.StandinBridge.hydrate().then((items) => {
+      items.forEach(prependRemote);
+    }).catch(() => {});
+    try {
+      window.StandinBridge.sse((type, ev) => {
+        if(type !== "job.opened" || !ev.jobId) return;
+        fetch(window.StandinBridge.BASE + "/api/v1/jobs/" + ev.jobId)
+          .then((r) => r.ok ? r.json() : null)
+          .then((d) => { if(d && d.job) prependRemote(d.job); })
+          .catch(() => {});
+      });
+    } catch(e){}
+  }
 
   function toast(msg, accent){
     const t = document.createElement("div");
-    t.className = "toast bg-[#111110] text-white rounded-2xl px-5 py-4 text-sm font-bold border-2 border-[#111110]";
+    t.className = "toast bg-[#111110] text-white rounded-2xl px-5 py-4 text-sm font-bold border-2 border-[#111110] shadow-[4px_4px_0_rgba(17,17,16,.3)]";
     t.innerHTML = (accent ? '<span class="inline-block px-2 py-0.5 rounded-full bg-[#D8FF3E] text-black text-xs font-extrabold mr-2">DONE</span>' : "") + msg;
     $("#toastRoot").appendChild(t);
     setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity .3s"; setTimeout(() => t.remove(), 320); }, 3400);
@@ -633,6 +702,55 @@ setInterval(() => {
     $("#statusText").textContent = "My jobs (" + state.jobs.length + ") • " + plan + (state.doer ? " • Earning" : "");
     const loginBtn = document.querySelector('[data-nav="login"]');
     if(loginBtn) loginBtn.textContent = state.user ? ("Hi, " + state.user.name) : "Log in";
+    renderAdminTab();
+  }
+
+  // Admin nav tab: rendered only for signed-in owners (checked live, cached).
+  let adminKnown = { at: 0, show: false };
+  function applyAdminTab(show){
+    document.querySelectorAll("[data-admin-tab]").forEach((a) => { a.style.display = show ? "" : "none"; });
+  }
+  async function renderAdminTab(force){
+    const now = Date.now();
+    if(!force && now - adminKnown.at < 60000){ applyAdminTab(adminKnown.show); return; }
+    let show = false;
+    try {
+      if(window.StandinBridge && state.user && state.user.backend){
+        show = (await window.StandinBridge.api("/api/v1/admin/overview")).ok;
+      }
+    } catch(e){}
+    adminKnown = { at: now, show };
+    applyAdminTab(show);
+  }
+
+  // Job thumbnails matched to the order type (all photos verified). Rush
+  // totals included: 3/5 roast, 4 hype, 5/7 place, 6/8 pitch, 9/11 proposal, 14/16 queue.
+  const PRICE_IMG = {
+    3: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=300&q=70",
+    4: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=300&q=70",
+    5: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=300&q=70",
+    6: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=300&q=70",
+    7: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=300&q=70",
+    8: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=300&q=70",
+    9: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=300&q=70",
+    11: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=300&q=70",
+    14: "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=300&q=70",
+    16: "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=300&q=70"
+  };
+  function priceImg(price, seed){
+    return PRICE_IMG[price] || ("https://picsum.photos/seed/" + seed + "/400/400");
+  }
+
+  function jobCard(job){
+    const el = document.createElement("div");
+    el.className = "scale-fade-img group bg-white border-2 border-[#111110] rounded-3xl overflow-hidden flex gap-4 p-4 items-center";
+    el.dataset.jobId = job.id;
+    el.innerHTML = '<img src="' + priceImg(job.price, "job" + String(job.id).slice(-6)) + '" class="w-28 h-28 rounded-2xl object-cover border border-[#111110]" alt="' + job.title.replace(/</g,"&lt;") + '" />'
+      + '<div class="flex-1"><p class="font-extrabold">' + job.title.replace(/</g,"&lt;") + '</p>'
+      + '<p class="text-sm font-semibold text-black/50">' + job.city + ' • ' + job.status + ' • escrow $' + job.price + '</p></div>'
+      + '<div class="flex flex-col gap-2 items-end"><span class="font-extrabold text-sm bg-[#D8FF3E] border border-[#111110] rounded-full px-3 py-1.5">$' + job.price + '</span>'
+      + (job.status === "open" ? '<button data-claim="' + job.id + '" class="text-xs font-extrabold px-3 py-1.5 rounded-full bg-[#111110] text-white">Claim</button>' : '<span class="text-xs font-extrabold text-black/40">' + job.status + '</span>') + '</div>';
+    return el;
   }
 
   function renderMyJobs(){
@@ -642,12 +760,32 @@ setInterval(() => {
     state.jobs.slice().reverse().forEach(j => {
       const row = document.createElement("div");
       row.className = "bg-white border-2 border-[#111110] rounded-2xl p-4 flex items-center justify-between gap-3";
-      row.innerHTML = '<div><p class="font-extrabold text-sm">' + j.title.replace(/</g,"&lt;") + '</p><p class="text-xs font-bold text-black/45">' + j.city + ' • $' + j.price + ' • ' + j.status + '</p></div>'
-        + (j.status === "open" ? '<button data-cancel="' + j.id + '" class="text-xs font-extrabold px-3 py-2 rounded-full border-2 border-[#111110]">Cancel + refund</button>' : '<span class="text-xs font-extrabold text-black/40">' + j.status + '</span>');
+      const descLine = j.description ? '<p class="text-xs text-black/50 mt-0.5">' + j.description.replace(/</g,"&lt;").slice(0,80) + '</p>' : '';
+      row.innerHTML = '<div class="min-w-0"><p class="font-extrabold text-sm">' + j.title.replace(/</g,"&lt;") + '</p><p class="text-xs font-bold text-black/45">' + j.city + ' • $' + j.price + ' • ' + j.status + '</p>' + descLine + '</div>'
+        + (j.status === "open"
+          ? '<button data-cancel="' + j.id + '" class="text-xs font-extrabold px-3 py-2 rounded-full border-2 border-[#111110]">Cancel + refund</button>'
+          : j.status === "delivered"
+          ? '<button data-approve="' + j.id + '" class="text-xs font-extrabold px-3 py-2 rounded-full bg-[#111110] text-white">Approve + pay 80%</button>'
+          : '<span class="text-xs font-extrabold text-black/40">' + j.status + '</span>');
       list.appendChild(row);
     });
   }
 
+  function prependToFeed(job){ const feed = $("#jobFeed"); const box = $("#liveFeedBox"); feed.insertBefore(jobCard(job), box); }
+
+  // restore persisted jobs into feed
+  state.jobs.slice(-4).forEach(prependToFeed);
+  renderMyJobs(); refreshStatus();
+
+  // builder -> job modal prefill
+  function prefillFromBuilder(){
+    const txt = ($("#askInput") && $("#askInput").value.trim()) || ($("#askPreview") ? $("#askPreview").textContent : "");
+    if(txt) $("#fTitle").value = txt;
+    const m = ($("#priceOut") ? $("#priceOut").textContent : "$5").replace("$","");
+    const cat = $("#fCat");
+    for(const o of cat.options){ if(o.value === String(m)) cat.value = o.value; }
+    updateJobPrice();
+  }
   function updateJobPrice(){
     const p = parseInt($("#fCat").value, 10) + ($("#fRush").checked ? 2 : 0);
     $("#jobPriceOut").textContent = "$" + p;
@@ -659,25 +797,89 @@ setInterval(() => {
   $("#fRush").addEventListener("change", updateJobPrice);
   updateJobPrice();
 
+  // global action wiring (event delegation covers replaced buttons too)
   document.addEventListener("click", (e) => {
-    const el = e.target.closest("[data-action]");
-    if(!el) {
-      const cancel = e.target.closest("[data-cancel]");
-      if(cancel){
-        const job = state.jobs.find(j => j.id === cancel.dataset.cancel);
-        if(job){ job.status = "refunded"; store.save(state); }
-        renderMyJobs(); refreshStatus();
-        toast("Cancelled. Escrow refunded instantly.", true);
+    const claim = e.target.closest("[data-claim]");
+    if(claim){
+      const id = claim.dataset.claim;
+      if(!state.doer){ openPanel("doerModal"); toast("Become a doer first — 2-minute check, then you can claim."); return; }
+      let job = state.jobs.find(j => j.id === id);
+      if(!job && remoteCache.has(id)){
+        const r = remoteCache.get(id);
+        job = { id: "j" + Date.now().toString(36), backendId: r.id, title: r.title, city: r.city, price: r.total, status: "open" };
+        state.jobs.push(job);
       }
+      if(job && job.status === "open"){
+        job.status = "claimed"; job.doer = state.doer.name || "you"; job.claimedHere = true;
+        store.save(state);
+        if(job.backendId && window.StandinBridge){
+          window.StandinBridge.ensureVerified(state.doer.name, state.doer.city)
+            .then(() => window.StandinBridge.claimRemote(job.backendId))
+            .catch(() => {});
+        }
+      }
+      claim.outerHTML = '<span class="text-xs font-extrabold text-black/40">claimed</span>';
+      toast("Job claimed. Film it and upload — payout releases on delivery.", true);
+      renderMyJobs(); refreshStatus(); return;
+    }
+    const cancel = e.target.closest("[data-cancel]");
+    if(cancel){
+      const id = cancel.dataset.cancel;
+      const job = state.jobs.find(j => j.id === id);
+      if(job){ job.status = "refunded"; store.save(state); }
+      if(job && job.backendId && window.StandinBridge) window.StandinBridge.cancelRemote(job.backendId).catch(() => {});
+      const card = document.querySelector('[data-job-id="' + id + '"]');
+      if(card) card.remove();
+      renderMyJobs(); refreshStatus();
+      toast("Cancelled. Escrow refunded instantly.", true);
       return;
     }
+    const approve = e.target.closest("[data-approve]");
+    if(approve){
+      const id = approve.dataset.approve;
+      const job = state.jobs.find(j => j.id === id);
+      if(job && job.status === "delivered"){ job.status = "paid"; store.save(state); }
+      if(job && job.backendId && window.StandinBridge) window.StandinBridge.approveRemote(job.backendId).catch(() => {});
+      renderMyJobs(); refreshStatus();
+      toast("Approved. Doer payout released (80%).", true);
+      return;
+    }
+    const el = e.target.closest("[data-action]");
+    if(!el) return;
+    if(el.tagName === "A") e.preventDefault(); // actions act — they never drag the page along
     const a = el.dataset.action;
-    if(a === "open-job"){ openPanel("jobModal"); setTimeout(() => $("#fTitle").focus(), 50); }
+    if(a === "open-job"){ prefillFromBuilder(); openPanel("jobModal"); setTimeout(() => $("#fTitle").focus(), 50); }
     if(a === "open-doer"){ openPanel("doerModal"); }
-    if(a === "open-login"){ openPanel(state.user ? "myjobsModal" : "loginModal"); if(state.user) renderMyJobs(); }
-    if(a === "open-plus"){ openPanel("plusModal"); }
+    if(a === "open-login"){
+      if(state.user){ renderMyJobs(); openPanel("myjobsModal"); }
+      else { hideAuthErr(); updateAuthNote(); openPanel("loginModal"); setTimeout(() => $("#lEmail").focus(), 60); }
+    }
+    if(a === "open-plus"){ state.plan === "plus" ? toast("Standin+ is already active on this device.", true) : openPanel("plusModal"); }
     if(a === "open-sales"){ openPanel("salesModal"); }
     if(a === "open-myjobs"){ renderMyJobs(); openPanel("myjobsModal"); }
+    if(a === "open-boards"){ renderBoards(); openPanel("boardsModal"); }
+    if(a === "open-payouts"){ renderPayouts(); openPanel("payoutsModal"); }
+    if(a === "open-safety"){ renderReports(); openPanel("safetyModal"); }
+    if(a === "open-contact"){ openPanel("contactModal"); }
+    if(a === "open-terms"){ openPanel("termsModal"); }
+    if(a === "cashout"){
+      const earned = state.jobs.filter(j => j.status === "paid").reduce((s,j) => s + doerShare(j.price), 0);
+      state.lastCashout = new Date().toISOString(); store.save(state); renderPayouts();
+      toast(earned > 0 ? ("Cash-out of $" + earned + " requested. Lands Friday.") : "Nothing paid out yet — deliver a pickup first.", earned > 0);
+    }
+    if(a === "logout"){
+      // Full session end + device wipe: identity, verification, plan, and
+      // every locally stored order/report. The public pool rehydrates from
+      // seeds + network; nothing account-specific may survive logout.
+      state.user = null;
+      state.doer = null;
+      state.plan = "free";
+      state.jobs = [];
+      state.reports = [];
+      if(window.StandinBridge) window.StandinBridge.logout();
+      store.save(state); refreshStatus(); renderAdminTab(true); renderMyJobs(); closeAll();
+      toast("Logged out. This device was wiped clean.");
+    }
     if(a === "close"){ closeAll(); }
     if(a === "doer-next-2"){
       if(!$("#dName").value.trim()){ toast("Add a display name first."); return; }
@@ -686,24 +888,66 @@ setInterval(() => {
     }
     if(a === "doer-finish"){ closeAll(); document.getElementById("live").scrollIntoView({behavior:"smooth"}); }
   });
-  document.addEventListener("keydown", (e) => {
-    if((e.key === "Enter" || e.key === " ") && e.target.matches('[role="button"]')){ e.preventDefault(); openPanel("jobModal"); }
-  });
 
-  $("#jobForm").addEventListener("submit", (e) => {
+  // job submit = validated, scanned, then created (server first when online)
+  const SCAN_RE = [
+    { re: /\+?\d(?:[\d\s().-]{6,}\d)/, msg: "Leave phone numbers out — all chat stays on-platform." },
+    { re: /[\w.+-]+@[\w-]+\.[\w.]+/, msg: "Leave emails out — all chat stays on-platform." },
+    { re: /https?:\/\//i, msg: "No links — keep everything on-platform." },
+    { re: /\b(sex|porn|nude|naked|escort|hookup|onlyfans)\b/i, msg: "No sexual content — public-place tasks only." },
+    { re: /\b(my (place|apartment|flat|house|hotel|room)|come over|meet .*alone|bedroom)\b/i, msg: "Public places only — no private meetups." },
+  ];
+  function quickScan(t){ const hit = SCAN_RE.find((r) => r.re.test(t)); return hit ? hit.msg : null; }
+  function liveScan(){
+    const line = $("#jobScan");
+    const hit = quickScan($("#fTitle").value + "\n" + $("#fDesc").value);
+    line.textContent = hit ? ("Heads up: " + hit) : "Looks good — public task, no contact details.";
+    line.className = "text-xs font-bold " + (hit ? "text-red-600" : "text-emerald-600");
+  }
+  $("#fTitle").addEventListener("input", liveScan);
+  $("#fDesc").addEventListener("input", liveScan);
+  $("#jobForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const title = $("#fTitle").value.trim();
-    if(title.length < 8){ $("#jobErr").classList.remove("hidden"); return; }
-    $("#jobErr").classList.add("hidden");
-    const price = parseInt($("#fCat").value, 10) + ($("#fRush").checked ? 2 : 0);
-    const job = { id: "j" + Date.now().toString(36), title, city: $("#fCity").value, price, status: "open" };
+    const errBox = $("#jobErr");
+    const fail = (m) => { errBox.textContent = m; errBox.classList.remove("hidden"); };
+    if(title.length < 8){ fail("Describe the job in at least 8 characters."); return; }
+    const draft = {
+      title,
+      description: $("#fDesc").value.trim().slice(0, 500),
+      deadline: $("#fWhen").value,
+      videoLength: $("#fLen").value,
+      city: $("#fCity").value,
+      price: parseInt($("#fCat").value, 10) + ($("#fRush").checked ? 2 : 0),
+    };
+    const pre = quickScan(title + "\n" + draft.description);
+    if(pre){ fail(pre); return; }
+    errBox.classList.add("hidden");
+    const online = window.StandinBridge ? await window.StandinBridge.healthy() : false;
+    if(online){
+      const btn = $("#jobSubmit");
+      btn.textContent = "Scanning + posting…"; btn.disabled = true;
+      try {
+        const res = await window.StandinBridge.pushJob({ id: "j" + Date.now().toString(36), ...draft });
+        if(!res.ok){ fail(res.error || "Rejected. Try simpler wording."); return; }
+        const job = { id: res.job.clientId || ("j" + Date.now().toString(36)), backendId: res.job.id, status: "open", ...draft, city: res.job.city, price: res.job.total };
+        state.jobs.push(job); store.save(state);
+        prependToFeed(job); renderMyJobs(); refreshStatus(); closeAll();
+        const live = $("#liveLine"); if(live) live.textContent = "You just posted \"" + title.slice(0,42) + "\" — $" + job.price;
+        toast("Job live in the feed. Escrow held $" + job.price + ".", true);
+        document.getElementById("live").scrollIntoView({ behavior: "smooth" });
+      } finally { btn.textContent = "Pay into escrow →"; btn.disabled = false; }
+      return;
+    }
+    const job = { id: "j" + Date.now().toString(36), status: "open", pendingScan: true, ...draft };
     state.jobs.push(job); store.save(state);
-    renderMyJobs(); refreshStatus(); closeAll();
-    const live = $("#liveLine"); if(live) live.textContent = "You just posted \"" + title.slice(0,42) + "\" — $" + price;
-    toast("Job live in the feed. Escrow held $" + price + ".", true);
-    document.getElementById("live").scrollIntoView({behavior:"smooth"});
+    prependToFeed(job); renderMyJobs(); refreshStatus(); closeAll();
+    const live = $("#liveLine"); if(live) live.textContent = "You just posted \"" + title.slice(0,42) + "\" — $" + job.price;
+    toast("Saved offline — scanned automatically on sync.", true);
+    document.getElementById("live").scrollIntoView({ behavior: "smooth" });
   });
 
+  // doer verification simulation
   $("#verifyBtn").addEventListener("click", () => {
     let p = 0;
     const bar = $("#verifyBar");
@@ -712,20 +956,161 @@ setInterval(() => {
       if(p >= 100){ clearInterval(iv);
         state.doer = { name: $("#dName").value.trim(), city: $("#dCity").value };
         store.save(state); refreshStatus();
+        if(window.StandinBridge) window.StandinBridge.ensureVerified(state.doer.name, state.doer.city).catch(() => {});
         $("#doerStep2").classList.add("modal-hidden"); $("#doerStep3").classList.remove("modal-hidden"); $("#dDot3").classList.add("on");
         toast("Verified. You can now claim paid jobs.", true);
       }
     }, 220);
   });
 
-  $("#loginForm").addEventListener("submit", (e) => {
+  // login — real accounts when the API is up, device fallback offline
+  let authMode = "login";
+  function hideAuthErr(){ $("#authErr").classList.add("hidden"); }
+  function authError(msg){ const p = $("#authErr"); p.textContent = msg; p.classList.remove("hidden"); }
+  async function updateAuthNote(){
+    const note = $("#authNote");
+    note.textContent = "Checking connection…";
+    let online = false;
+    try { online = window.StandinBridge ? await window.StandinBridge.healthy() : false; } catch(e){}
+    note.textContent = online
+      ? "Online — this signs you into a real, synced account."
+      : "Server unreachable — you can continue on this device only. Is npm run dev up?";
+  }
+  function renderAuthMode(){
+    $("#authTitle").textContent = authMode === "login" ? "Log in" : "Create account";
+    $("#authBtn").textContent = authMode === "login" ? "Log in →" : "Create account →";
+    $("#tabLogin").className = authMode === "login"
+      ? "px-4 py-2.5 rounded-full bg-[#111110] text-white text-sm font-extrabold"
+      : "px-4 py-2.5 rounded-full border-2 border-[#111110] text-sm font-extrabold";
+    $("#tabRegister").className = authMode === "register"
+      ? "px-4 py-2.5 rounded-full bg-[#111110] text-white text-sm font-extrabold"
+      : "px-4 py-2.5 rounded-full border-2 border-[#111110] text-sm font-extrabold";
+    $("#lName").style.display = authMode === "register" ? "" : "none";
+    $("#lCity").style.display = authMode === "register" ? "" : "none";
+  }
+  $("#tabLogin").addEventListener("click", () => { authMode = "login"; renderAuthMode(); });
+  $("#tabRegister").addEventListener("click", () => { authMode = "register"; renderAuthMode(); });
+  renderAuthMode();
+  $("#loginForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    if(!$("#lName").value.trim()){ toast("Add your name to continue."); return; }
-    state.user = { name: $("#lName").value.trim(), city: $("#lCity").value.trim() || "Berlin" };
-    store.save(state); refreshStatus(); closeAll();
-    toast("Logged in as " + state.user.name + ". Jobs save to this device.", true);
+    hideAuthErr();
+    const btn = $("#authBtn");
+    const email = $("#lEmail").value.trim().toLowerCase();
+    const password = $("#lPassword").value;
+    if(!email.includes("@")){ authError("Add a valid email address."); return; }
+    if(!password){ authError("Enter your password."); return; }
+    if(authMode === "register" && password.length < 8){ authError("New passwords need 8+ characters."); return; }
+    const online = window.StandinBridge ? await window.StandinBridge.healthy() : false;
+    if(online){
+      btn.textContent = "Checking…"; btn.disabled = true;
+      try {
+        const call = authMode === "login"
+          ? window.StandinBridge.login({ email, password })
+          : window.StandinBridge.register({ name: $("#lName").value.trim() || email.split("@")[0], email, password, city: $("#lCity").value.trim() });
+        const r = await call;
+        if(!r.ok){
+          const code = r.json.error ? r.json.error.code : "";
+          authError(code === "bad_credentials"
+            ? "Wrong email or password. New here? Hit Create account above."
+            : code === "email_taken"
+            ? "That email already has an account — hit Log in above instead."
+            : "Auth failed (server said " + r.status + "). Is the backend running?");
+        } else {
+          state.user = { name: r.json.user.name, email: r.json.user.email, city: r.json.user.city, backend: true };
+          store.save(state); refreshStatus(); renderAdminTab(true); closeAll();
+          toast((authMode === "login" ? "Welcome back, " : "Account created — welcome, ") + state.user.name + ".", true);
+        }
+      } finally { btn.textContent = authMode === "login" ? "Log in →" : "Create account →"; btn.disabled = false; }
+      return;
+    }
+    // Offline fallback: device-local session (upgrades to an account later).
+    const name = (authMode === "register" ? $("#lName").value.trim() : email.split("@")[0]) || "Guest";
+    state.user = { name, email, city: $("#lCity").value.trim() || "Berlin", backend: false };
+    store.save(state); refreshStatus(); renderAdminTab(true); closeAll();
+    toast("Saved on this device (offline). Log in again when online to sync.", true);
   });
 
+  function doerShare(p){ return Math.round(p * 0.8 * 100) / 100; }
+  function nextFriday(){
+    const d = new Date(); let diff = (5 - d.getDay() + 7) % 7; if(diff === 0) diff = 7;
+    d.setDate(d.getDate() + diff);
+    return d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "short" });
+  }
+  function renderBoards(){
+    const cities = {}, doers = {};
+    state.jobs.forEach((j) => {
+      if(j.status === "refunded") return;
+      const c = cities[j.city] = cities[j.city] || { n: 0, vol: 0 };
+      c.n++; c.vol += j.price;
+      if(j.doer && j.status !== "open") doers[j.doer] = (doers[j.doer] || 0) + doerShare(j.price);
+    });
+    const cityRows = Object.keys(cities).sort((a,b) => cities[b].vol - cities[a].vol).slice(0,5);
+    const doerRows = Object.keys(doers).sort((a,b) => doers[b] - doers[a]).slice(0,5);
+    const box = $("#boardsBody");
+    if(!cityRows.length){
+      box.innerHTML = '<div class="bg-white border-2 border-dashed border-[#111110]/30 rounded-2xl p-8 text-center font-bold text-black/40 text-sm">No orders yet — <button data-action="open-job" class="underline">post the first one</button>.</div>';
+      return;
+    }
+    box.innerHTML =
+      '<p class="text-xs font-extrabold uppercase tracking-[0.2em] text-black/40">Top cities by volume</p>' +
+      cityRows.map((c,i) => '<div class="flex items-center justify-between bg-white border-2 border-[#111110] rounded-2xl px-5 py-3"><span class="font-extrabold">' + (i+1) + '. ' + c.replace(/</g,"&lt;") + '</span><span class="text-sm font-bold text-black/50">' + cities[c].n + ' orders • $' + cities[c].vol + '</span></div>').join("") +
+      (doerRows.length ? '<p class="text-xs font-extrabold uppercase tracking-[0.2em] text-black/40 pt-2">Top earners</p>' +
+      doerRows.map((d,i) => '<div class="flex items-center justify-between bg-[#111110] text-white rounded-2xl px-5 py-3"><span class="font-extrabold">' + (i+1) + '. ' + d.replace(/</g,"&lt;") + '</span><span class="text-sm font-bold text-[#D8FF3E]">$' + doers[d] + '</span></div>').join("") : "");
+  }
+  function renderPayouts(){
+    const pend = state.jobs.filter(j => j.status === "delivered").reduce((s,j) => s + doerShare(j.price), 0);
+    const earned = state.jobs.filter(j => j.status === "paid").reduce((s,j) => s + doerShare(j.price), 0);
+    $("#payoutBody").innerHTML =
+      '<div class="flex justify-between bg-white border-2 border-[#111110] rounded-2xl px-5 py-3.5 font-extrabold"><span>Awaiting approval</span><span>$' + pend + '</span></div>' +
+      '<div class="flex justify-between bg-[#111110] text-white rounded-2xl px-5 py-3.5 font-extrabold"><span>Paid out to doers</span><span class="text-[#D8FF3E]">$' + earned + '</span></div>' +
+      '<p class="text-sm font-semibold text-black/50">Next Friday batch: <b class="text-black">' + nextFriday() + '</b>' + (state.lastCashout ? ' • last cash-out requested ' + new Date(state.lastCashout).toLocaleDateString() : '') + '</p>' +
+      '<button data-action="cashout" class="w-full px-6 py-3.5 rounded-full bg-[#D8FF3E] border-2 border-[#111110] font-extrabold text-sm">Request cash-out →</button>';
+  }
+  function renderReports(){
+    const list = (state.reports || []).slice(0, 10);
+    $("#myReports").innerHTML = list.length
+      ? '<p class="text-xs font-extrabold uppercase tracking-[0.2em] text-black/40">Your reports</p>' + list.map((r) =>
+        '<div class="bg-white border border-[#111110]/20 rounded-2xl px-4 py-3 text-sm"><span class="font-extrabold">' + r.subject.replace(/</g,"&lt;") + '</span> <span class="text-xs font-bold ' + (r.synced ? 'text-emerald-600">sent' : 'text-black/40">on this device') + '</span></div>').join("")
+      : "";
+  }
+  async function fileReport(type, subject, message, contact){
+    const entry = { id: "r" + Date.now().toString(36), type, subject, message, contact: contact || "", at: new Date().toISOString(), synced: false };
+    if(window.StandinBridge){
+      try {
+        const r = await fetch(window.StandinBridge.BASE + "/api/v1/reports", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type, subject, message, contact }) });
+        if(r.ok){ entry.synced = true; entry.id = (await r.json()).report.id; }
+      } catch(e){}
+    }
+    state.reports = state.reports || []; state.reports.unshift(entry); store.save(state);
+    return entry;
+  }
+  $("#safetyForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const s = $("#repSubject").value.trim(), m = $("#repMessage").value.trim(), c = $("#repContact").value.trim();
+    const err = $("#repErr");
+    if(s.length < 4){ err.textContent = "Give it a short subject."; err.classList.remove("hidden"); return; }
+    if(m.length < 10){ err.textContent = "Tell us a little more (10+ characters)."; err.classList.remove("hidden"); return; }
+    err.classList.add("hidden");
+    await fileReport("safety", s, m, c);
+    $("#repSubject").value = ""; $("#repMessage").value = ""; $("#repContact").value = "";
+    renderReports();
+    toast("Report sent. Owners review every one.", true);
+  });
+  $("#contactForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const em = $("#conEmail").value.trim(), s = $("#conSubject").value.trim(), m = $("#conMessage").value.trim();
+    const err = $("#conErr");
+    if(!em.includes("@")){ err.textContent = "Add a valid email so we can reply."; err.classList.remove("hidden"); return; }
+    if(s.length < 4){ err.textContent = "Give it a short subject."; err.classList.remove("hidden"); return; }
+    if(m.length < 10){ err.textContent = "Tell us a little more (10+ characters)."; err.classList.remove("hidden"); return; }
+    err.classList.add("hidden");
+    await fileReport("contact", s, m, em);
+    $("#conEmail").value = ""; $("#conSubject").value = ""; $("#conMessage").value = "";
+    closeAll();
+    toast("Message sent. We answer within one business day.", true);
+  });
+
+  // checkout simulation
   $("#plusForm").addEventListener("submit", (e) => {
     e.preventDefault();
     if(($("#cCard").value.replace(/\D/g,"")).length < 12){ toast("Use any 12+ digit test card, e.g. 4242…"); return; }
@@ -737,13 +1122,40 @@ setInterval(() => {
     }, 1100);
   });
 
+  // sales
   $("#salesForm").addEventListener("submit", (e) => {
     e.preventDefault();
     if(!$("#sEmail").value.includes("@")){ toast("Add a valid work email."); return; }
     closeAll(); toast("Request received. Demo link sent to " + $("#sEmail").value + ".", true);
   });
 
-  renderMyJobs(); refreshStatus();
+  // Streamlined nav: mobile menu, auto-close, active-section highlight.
+  const navMenu = document.getElementById("navMenu");
+  document.getElementById("navToggle").addEventListener("click", () => {
+    navMenu.classList.toggle("modal-hidden");
+  });
+  navMenu.querySelectorAll('a[href^="#"]').forEach((a) => {
+    a.addEventListener("click", () => navMenu.classList.add("modal-hidden"));
+  });
+  document.addEventListener("click", (e) => {
+    if(e.target.closest("[data-action]")) navMenu.classList.add("modal-hidden");
+  });
+  const navLinks = document.querySelectorAll("[data-navlink]");
+  if("IntersectionObserver" in window){
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if(en.isIntersecting){
+          navLinks.forEach((l) => l.classList.toggle("underline", l.dataset.navlink === en.target.id));
+        }
+      });
+    }, { rootMargin: "-40% 0px -55% 0px" });
+    ["live","pricing"].forEach((id) => { const s = document.getElementById(id); if(s) io.observe(s); });
+  }
+
+  // keyboard access for card-button
+  document.addEventListener("keydown", (e) => {
+    if((e.key === "Enter" || e.key === " ") && e.target.matches('[role="button"]')){ e.preventDefault(); prefillFromBuilder(); openPanel("jobModal"); }
+  });
 })();
 </script>
 </body>

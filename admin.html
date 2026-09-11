@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>STANDIN Ops — Owner console</title>
+<link rel="stylesheet" href="./styles.css?v=4" />
+<style>
+  body { background:#0C0C0B; color:#F5F3EE; overflow-x:hidden; font-family:'Cabinet Grotesk','Outfit',sans-serif; }
+  ::selection { background:#D8FF3E; color:#111110; }
+  .field{ width:100%; border:2px solid rgba(255,255,255,.2); border-radius:1rem; padding:.8rem 1rem; font-weight:600; background:#171716; color:#F5F3EE; caret-color:#D8FF3E; }
+  .field:focus{ outline:none; border-color:#D8FF3E; }
+  .toast{ animation: toastIn .35s cubic-bezier(.22,1,.36,1); }
+  @keyframes toastIn{ from{ transform:translateY(16px); opacity:0 } to{ transform:translateY(0); opacity:1 } }
+  .modal-hidden{ display:none; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:rgba(255,255,255,.4); padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.12); white-space:nowrap; }
+  td{ padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.07); vertical-align:top; }
+  tr:hover td{ background:rgba(255,255,255,.03); }
+</style>
+</head>
+<body class="antialiased">
+<main class="overflow-x-hidden w-full max-w-full">
+
+  <header class="sticky top-0 z-[100] bg-[#0C0C0B]/90 border-b border-white/10" style="backdrop-filter:blur(12px)">
+    <div class="max-w-7xl mx-auto px-5 py-3 flex items-center justify-between gap-3">
+      <a href="./index.html" class="flex items-center gap-2">
+        <span class="w-8 h-8 rounded-full bg-[#D8FF3E] text-black grid place-items-center font-extrabold">S</span>
+        <span class="font-extrabold tracking-tight">STANDIN</span>
+        <span class="text-[11px] font-bold uppercase tracking-[0.18em] bg-white/10 border border-white/15 rounded-full px-2.5 py-1">ops console</span>
+      </a>
+      <div class="flex items-center gap-2">
+        <span id="userChip" class="hidden sm:inline-block text-xs font-bold text-white/50">signed out</span>
+        <button id="refreshBtn" class="text-xs font-extrabold px-4 py-2 rounded-full border border-white/20 hover:border-white">Refresh</button>
+        <button id="outBtn" class="text-xs font-extrabold px-4 py-2 rounded-full bg-white/10 hover:bg-white/20">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- LOCK : admins only -->
+  <section id="lockScreen" class="max-w-md mx-auto px-5 py-20 text-center">
+    <p class="text-xs font-extrabold uppercase tracking-[0.22em] text-[#D8FF3E]">Owners only</p>
+    <h1 class="text-4xl font-extrabold tracking-tight mt-2">Watch the marketplace.</h1>
+    <p class="text-white/50 font-medium text-sm mt-3">Sign in with an owner account to continue.</p>
+    <div class="mt-6 space-y-2 text-left">
+      <input id="admEmail" type="email" class="field" placeholder="Owner email" />
+      <input id="admPass" type="password" class="field" placeholder="Password" />
+      <button id="admGo" class="w-full px-6 py-3.5 rounded-full bg-[#D8FF3E] text-black font-extrabold">Unlock console →</button>
+      <p id="admErr" class="modal-hidden text-sm font-bold text-red-300 bg-red-500/10 border border-red-400/30 rounded-2xl px-4 py-3"></p>
+    </div>
+    <a href="./index.html" class="inline-block mt-6 text-sm font-bold text-white/40 hover:text-white">← Back to site</a>
+  </section>
+
+  <div id="dashContent" class="modal-hidden max-w-7xl mx-auto px-5 py-10 space-y-8">
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="rounded-2xl bg-white/5 border border-white/10 p-5"><p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/40">Volume (GMV)</p><p id="statGmv" class="text-3xl font-extrabold mt-1">$0</p></div>
+      <div class="rounded-2xl bg-[#D8FF3E] text-black p-5"><p class="text-[11px] font-extrabold uppercase tracking-[0.18em] opacity-60">Fees earned (20%)</p><p id="statFees" class="text-3xl font-extrabold mt-1">$0</p></div>
+      <div class="rounded-2xl bg-white/5 border border-white/10 p-5"><p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/40">Open jobs</p><p id="statOpen" class="text-3xl font-extrabold mt-1">0</p></div>
+      <div class="rounded-2xl bg-white/5 border border-white/10 p-5"><p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/40">Paid out today</p><p id="statToday" class="text-3xl font-extrabold mt-1">$0</p></div>
+      <div class="rounded-2xl bg-white/5 border border-white/10 p-5"><p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/40">Paid to doers (all time)</p><p id="statPaid" class="text-3xl font-extrabold mt-1">$0</p></div>
+      <div class="rounded-2xl bg-white/5 border border-white/10 p-5"><p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/40">Users</p><p id="statUsers" class="text-3xl font-extrabold mt-1">0</p></div>
+      <div class="rounded-2xl bg-white/5 border border-white/10 p-5"><p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/40">Verified doers</p><p id="statDoers" class="text-3xl font-extrabold mt-1">0</p></div>
+      <div class="rounded-2xl bg-white/5 border border-white/10 p-5"><p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/40">By status</p><p id="statBreakdown" class="text-sm font-bold mt-2 leading-relaxed">—</p></div>
+    </section>
+
+    <section class="rounded-3xl bg-white/[0.03] border border-white/10 p-5 md:p-7">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 class="text-2xl font-extrabold tracking-tight">Jobs</h2>
+        <select id="jobFilter" class="bg-[#171716] border border-white/20 rounded-full px-4 py-2 text-sm font-bold">
+          <option value="">All statuses</option>
+          <option value="open">Open</option>
+          <option value="claimed">Claimed</option>
+          <option value="delivered">Delivered</option>
+          <option value="paid">Paid</option>
+          <option value="refunded">Refunded</option>
+        </select>
+      </div>
+      <div class="overflow-x-auto"><table><thead><tr><th>Job</th><th>Total</th><th>Status</th><th>Asker</th><th>Doer</th><th></th></tr></thead><tbody id="jobTable"></tbody></table></div>
+    </section>
+
+    <section class="rounded-3xl bg-white/[0.03] border border-white/10 p-5 md:p-7">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 class="text-2xl font-extrabold tracking-tight">Users</h2>
+        <input id="userQ" class="bg-[#171716] border border-white/20 rounded-full px-4 py-2 text-sm font-bold w-56" placeholder="Search name or email…" />
+      </div>
+      <div class="overflow-x-auto"><table><thead><tr><th>User</th><th>City</th><th>Plan</th><th>Role</th><th></th></tr></thead><tbody id="userTable"></tbody></table></div>
+    </section>
+
+    <section class="rounded-3xl bg-white/[0.03] border border-white/10 p-5 md:p-7">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 class="text-2xl font-extrabold tracking-tight">Money trail</h2>
+        <button id="exportBtn" class="text-xs font-extrabold px-4 py-2 rounded-full bg-[#D8FF3E] text-black">Download snapshot</button>
+      </div>
+      <div class="overflow-x-auto"><table><thead><tr><th>When</th><th>Job</th><th>Type</th><th>Amount</th><th>Actor</th></tr></thead><tbody id="ledgerTable"></tbody></table></div>
+    </section>
+
+    <section class="rounded-3xl bg-white/[0.03] border border-white/10 p-5 md:p-7">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 class="text-2xl font-extrabold tracking-tight">Inbox</h2>
+        <select id="reportFilter" class="bg-[#171716] border border-white/20 rounded-full px-4 py-2 text-sm font-bold">
+          <option value="">Safety + contact</option>
+          <option value="safety">Safety</option>
+          <option value="contact">Contact</option>
+        </select>
+      </div>
+      <div class="overflow-x-auto"><table><thead><tr><th>When</th><th>Type</th><th>Subject</th><th>Message</th><th>Contact</th></tr></thead><tbody id="reportTable"></tbody></table></div>
+    </section>
+
+    <section class="rounded-3xl bg-white/[0.03] border border-white/10 p-5 md:p-7 max-w-2xl">
+      <h2 class="text-2xl font-extrabold tracking-tight">Owner account</h2>
+      <p class="text-sm font-medium text-white/45 mt-1">Change this login's password. New passwords need 8+ characters.</p>
+      <div class="mt-4 space-y-2">
+        <input id="pwCurrent" type="password" class="field" placeholder="Current password" />
+        <input id="pwNew" type="password" class="field" placeholder="New password (8+ characters)" />
+        <button id="pwGo" class="px-6 py-3 rounded-full bg-[#D8FF3E] text-black text-sm font-extrabold">Set new password →</button>
+        <p id="pwMsg" class="modal-hidden text-sm font-bold rounded-2xl px-4 py-3"></p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div id="toastRoot" class="fixed bottom-4 right-4 z-[130] space-y-2 w-[calc(100%-2rem)] max-w-sm"></div>
+
+<script src="./api-bridge.js"></script>
+<script>
+(function(){
+  function $(s){ return document.querySelector(s); }
+  function esc(s){ return String(s == null ? "" : s).replace(/</g,"&lt;"); }
+  function B(){ return window.StandinBridge; }
+  function money(n){ return "$" + (Math.round(Number(n || 0) * 100) / 100); }
+
+  function toast(msg){
+    var t = document.createElement("div");
+    t.className = "toast bg-white text-black rounded-2xl px-5 py-3.5 text-sm font-bold";
+    t.textContent = msg;
+    $("#toastRoot").appendChild(t);
+    setTimeout(function(){ t.style.opacity = "0"; setTimeout(function(){ t.remove(); }, 300); }, 3200);
+  }
+
+  var authed = false;
+
+  function renderLock(msg){
+    $("#dashContent").classList.add("modal-hidden");
+    $("#lockScreen").classList.remove("modal-hidden");
+    if (msg) { var p = $("#admErr"); p.textContent = msg; p.classList.remove("modal-hidden"); }
+  }
+
+  async function boot(){
+    if (!B()) { renderLock("Backend client missing."); return; }
+    if (!(await B().healthy())) { renderLock("Backend unreachable. Run npm run dev, then refresh."); return; }
+    var s = B().session();
+    if (s.mode === "none") return; // stay on lock, user logs in there
+    await refresh(true);
+  }
+
+  async function api(path, opts){
+    var r = await B().api(path, opts);
+    if (r.status === 401) { authed = false; renderLock("Session expired — log in again."); throw new Error("unauthorized"); }
+    if (r.status === 403) {
+      // Signed in but not an owner: leave. The console stays owner-only.
+      location.replace("./index.html");
+      throw new Error("forbidden");
+    }
+    if (!r.ok) throw new Error("request failed: " + r.status);
+    return r.json;
+  }
+
+  async function refresh(silent){
+    try {
+      var over = await api("/api/v1/admin/overview");
+      authed = true;
+      $("#lockScreen").classList.add("modal-hidden");
+      $("#dashContent").classList.remove("modal-hidden");
+      var u = B().session().user;
+      $("#userChip").textContent = u ? u.email : "owner";
+      var st = over.stats;
+      $("#statGmv").textContent = money(st.gmv);
+      $("#statFees").textContent = money(st.fees);
+      $("#statOpen").textContent = st.openJobs;
+      $("#statToday").textContent = money(st.paidToday);
+      $("#statPaid").textContent = money(st.paidOut);
+      $("#statUsers").textContent = st.users;
+      $("#statDoers").textContent = st.verifiedDoers;
+      $("#statBreakdown").textContent = Object.keys(st.jobsByStatus).sort().map(function(k){ return k + ": " + st.jobsByStatus[k]; }).join(" • ") || "—";
+      await Promise.all([renderJobs(), renderUsers(), renderLedger(), renderInbox()]);
+    } catch (e) { if (!silent) toast(e.message); }
+  }
+
+  async function renderJobs(){
+    var st = $("#jobFilter").value;
+    var d = await api("/api/v1/admin/jobs?limit=30" + (st ? "&status=" + st : ""));
+    var tb = $("#jobTable");
+    tb.innerHTML = d.items.length ? "" : '<tr><td colspan="6" class="text-white/40">No jobs.</td></tr>';
+    d.items.forEach(function(j){
+      var canMod = j.status === "open" || j.status === "claimed";
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td><b>" + esc(j.title) + "</b><br/><span style='opacity:.45'>" + esc(j.city) + " • " + esc(j.id) + "</span></td>" +
+        "<td><b>" + money(j.total) + "</b></td><td>" + esc(j.status) + (j.moderation && j.moderation.flags && j.moderation.flags.length ? ' <b style="color:#FF5C28">review</b>' : "") + "</td>" +
+        "<td style='opacity:.6'>" + esc(j.askerId || "") + "</td><td style='opacity:.6'>" + esc(j.doerId || "—") + "</td>" +
+        "<td>" + (canMod ? '<button data-mod="' + esc(j.id) + '" data-st="' + esc(j.status) + '" style="border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:6px 14px;font-weight:800;font-size:12px">' + (j.status === "open" ? "Refund" : "Reopen") + "</button>" : "") + "</td>";
+      tb.appendChild(tr);
+    });
+  }
+
+  async function renderUsers(){
+    var q = $("#userQ").value.trim();
+    var d = await api("/api/v1/admin/users?limit=50" + (q ? "&q=" + encodeURIComponent(q) : ""));
+    var tb = $("#userTable");
+    tb.innerHTML = d.items.length ? "" : '<tr><td colspan="5" class="text-white/40">No users.</td></tr>';
+    d.items.forEach(function(u){
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td><b>" + esc(u.name) + "</b><br/><span style='opacity:.45'>" + esc(u.email) + "</span></td>" +
+        "<td>" + esc(u.city || "—") + "</td><td>" + esc(u.plan || "free") + "</td>" +
+        "<td>" + (u.role === "admin" ? "<b style='color:#D8FF3E'>admin</b>" : "user") + "</td>" +
+        '<td><button data-role="' + esc(u.id) + '" data-to="' + (u.role === "admin" ? "user" : "admin") + '" style="border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:6px 14px;font-weight:800;font-size:12px">' + (u.role === "admin" ? "Demote" : "Make admin") + "</button></td>";
+      tb.appendChild(tr);
+    });
+  }
+
+  async function renderLedger(){
+    var d = await api("/api/v1/admin/ledger?limit=30");
+    var tb = $("#ledgerTable");
+    tb.innerHTML = d.items.length ? "" : '<tr><td colspan="5" class="text-white/40">No entries.</td></tr>';
+    d.items.forEach(function(t){
+      var when = new Date(t.at || t.created_at).toLocaleString();
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td style='opacity:.6'>" + esc(when) + "</td><td>" + esc(t.jobTitle || t.jobId || t.job_id) + "</td>" +
+        "<td><b>" + esc(t.type) + "</b></td><td><b>" + money(t.amount) + "</b></td><td style='opacity:.6'>" + esc(t.actor || "") + "</td>";
+      tb.appendChild(tr);
+    });
+  }
+
+  document.addEventListener("click", async function(e){
+    var mod = e.target.closest("[data-mod]");
+    if (mod) {
+      try {
+        await api("/api/v1/admin/jobs/" + mod.dataset.mod + "/cancel", { method: "POST", body: {} });
+        toast(mod.dataset.st === "open" ? "Refunded to asker." : "Released back to the pool.");
+        await refresh(true);
+      } catch (err) { toast(err.message); }
+      return;
+    }
+    var rl = e.target.closest("[data-role]");
+    if (rl) {
+      try {
+        await api("/api/v1/admin/users/" + rl.dataset.role + "/role", { method: "POST", body: { role: rl.dataset.to } });
+        toast("Role updated.");
+        await refresh(true);
+      } catch (err) { toast(err.message); }
+      return;
+    }
+  });
+
+  async function renderInbox(){
+    var t = $("#reportFilter").value;
+    var d = await api("/api/v1/admin/reports?limit=30" + (t ? "&type=" + t : ""));
+    var tb = $("#reportTable");
+    tb.innerHTML = d.items.length ? "" : '<tr><td colspan="5" class="text-white/40">Inbox zero.</td></tr>';
+    d.items.forEach(function(r){
+      var when = new Date(r.at).toLocaleString();
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td style='opacity:.6;white-space:nowrap'>" + esc(when) + "</td><td><b>" + esc(r.type) + "</b></td>" +
+        "<td><b>" + esc(r.subject) + "</b></td><td style='max-width:320px'>" + esc(r.message) + "</td><td style='opacity:.6'>" + esc(r.contact || "—") + "</td>";
+      tb.appendChild(tr);
+    });
+  }
+
+  var jobT;
+  $("#jobFilter").addEventListener("change", function(){ renderJobs().catch(function(e){ toast(e.message); }); });
+  $("#reportFilter").addEventListener("change", function(){ renderInbox().catch(function(e){ toast(e.message); }); });
+  $("#userQ").addEventListener("input", function(){ clearTimeout(jobT); jobT = setTimeout(function(){ renderUsers().catch(function(){}); }, 300); });
+
+  $("#admGo").addEventListener("click", async function(){
+    var email = $("#admEmail").value.trim().toLowerCase(), pass = $("#admPass").value;
+    if (!email.includes("@") || !pass) { renderLock("Email + password needed."); return; }
+    if (!(await B().healthy())) { renderLock("Backend unreachable. Run npm run dev, then refresh."); return; }
+    var r = await B().login({ email: email, password: pass });
+    if (!r.ok) { renderLock(r.json.error ? r.json.error.message : "Login failed."); return; }
+    await refresh(true);
+    if (!authed) toast("Logged in, but not an owner.");
+  });
+
+  $("#refreshBtn").addEventListener("click", function(){ refresh(false); });
+  $("#exportBtn").addEventListener("click", async function(){
+    var r = await B().api("/api/v1/admin/export");
+    if (!r.ok) { toast("Export failed."); return; }
+    var blob = new Blob([JSON.stringify(r.json, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "standin-export-" + new Date().toISOString().slice(0, 10) + ".json";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    toast("Snapshot downloaded.");
+  });
+  $("#outBtn").addEventListener("click", function(){
+    if (B()) B().logout();
+    authed = false;
+    $("#userChip").textContent = "signed out";
+    renderLock();
+  });
+
+  function pwNote(msg, ok){
+    var p = $("#pwMsg");
+    p.textContent = msg;
+    p.classList.remove("modal-hidden");
+    p.style.cssText = ok
+      ? "background:rgba(216,255,106,.12);border:1px solid rgba(216,255,106,.4);color:#D8FF3E"
+      : "background:rgba(255,80,80,.1);border:1px solid rgba(255,120,120,.4);color:#ff9c9c";
+  }
+  $("#pwGo").addEventListener("click", async function(){
+    var cur = $("#pwCurrent").value, next = $("#pwNew").value;
+    if (!cur || next.length < 8) { pwNote("Current password + a new 8+ character one.", false); return; }
+    var r = await B().api("/api/v1/auth/password", { method: "POST", body: { currentPassword: cur, newPassword: next } });
+    if (r.ok) {
+      $("#pwCurrent").value = ""; $("#pwNew").value = "";
+      pwNote("Password updated. Use it next time you log in.", true);
+    } else if (r.status === 401 && r.json.error && r.json.error.code === "bad_credentials") {
+      pwNote("That current password doesn't match. Try again.", false);
+    } else if (r.status === 401) {
+      authed = false; renderLock("Session expired — log in again.");
+    } else {
+      pwNote("Couldn't save it (server said " + r.status + ").", false);
+    }
+  });
+
+  setInterval(function(){ if (authed) refresh(true); }, 20000);
+  boot();
+})();
+</script>
+</body>
+</html>
