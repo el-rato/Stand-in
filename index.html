@@ -40,6 +40,15 @@ tailwind.config = {
   input[type=range]{ -webkit-appearance:none; height:3px; background:rgba(17,17,16,.18); border-radius:999px; }
   input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:24px; height:24px; border-radius:999px; background:#111110; cursor:pointer; border:3px solid #D8FF3E; box-shadow:0 0 0 2px #111110; }
   .img-grade{ filter: contrast(1.08) saturate(1.05); }
+  .modal-hidden{ display:none; }
+  .modal-open{ display:flex; }
+  #modalBackdrop{ transition: opacity .25s ease; }
+  .field{ width:100%; border:2px solid #111110; border-radius:1rem; padding:.85rem 1rem; font-weight:600; background:#FFFDF6; }
+  .field:focus{ outline:none; background:#D8FF3E33; }
+  .toast{ animation: toastIn .35s cubic-bezier(.22,1,.36,1); }
+  @keyframes toastIn{ from{ transform:translateY(16px); opacity:0 } to{ transform:translateY(0); opacity:1 } }
+  .step-dot{ width:8px; height:8px; border-radius:999px; background:rgba(17,17,16,.15); }
+  .step-dot.on{ background:#111110; }
 </style>
 </head>
 <body class="grain antialiased">
@@ -60,8 +69,8 @@ tailwind.config = {
         <a href="#pricing" class="hover:underline underline-offset-4">Pricing</a>
       </div>
       <div class="flex items-center gap-2">
-        <a href="#builder" class="hidden sm:inline-block text-sm font-bold px-4 py-2.5">Log in</a>
-        <a href="#builder" class="text-sm font-extrabold px-5 py-2.5 rounded-full bg-[#111110] text-white hover:bg-black transition-all">Get a human</a>
+        <a href="#builder" data-action="open-login" data-nav="login" class="hidden sm:inline-block text-sm font-bold px-4 py-2.5">Log in</a>
+        <button data-action="open-job" class="text-sm font-extrabold px-5 py-2.5 rounded-full bg-[#111110] text-white hover:bg-black transition-all">Get a human</button>
       </div>
     </nav>
   </header>
@@ -80,8 +89,8 @@ tailwind.config = {
       </h1>
       <p class="mt-7 text-lg md:text-xl leading-relaxed text-[#111110]/65 max-w-xl">Wake-up roasts, queue spots, bar checks, proposals in Paris, practice pitches. Ask in one sentence. Video back in minutes.</p>
       <div class="mt-9 flex flex-col sm:flex-row gap-3">
-        <a href="#builder" class="px-8 py-4 rounded-full bg-[#111110] text-white font-extrabold text-[15px] text-center border-2 border-[#111110] shadow-[5px_5px_0_#D8FF3E] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">Ask for anything — from $3</a>
-        <a href="#pricing" class="px-8 py-4 rounded-full bg-white text-[#111110] font-extrabold text-[15px] text-center border-2 border-[#111110] hover:bg-[#D8FF3E] transition-all">Film and earn</a>
+        <button data-action="open-job" class="px-8 py-4 rounded-full bg-[#111110] text-white font-extrabold text-[15px] text-center border-2 border-[#111110] shadow-[5px_5px_0_#D8FF3E] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">Ask for anything — from $3</button>
+        <button data-action="open-doer" class="px-8 py-4 rounded-full bg-white text-[#111110] font-extrabold text-[15px] text-center border-2 border-[#111110] hover:bg-[#D8FF3E] transition-all">Film and earn</button>
       </div>
       <div class="mt-8 flex flex-wrap gap-2 text-[13px] font-bold">
         <span class="px-3 py-1.5 rounded-full bg-white border border-[#111110]/20">No skills needed</span>
@@ -144,7 +153,7 @@ tailwind.config = {
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-6 grid-flow-dense gap-4">
-      <a href="#builder" class="group md:col-span-4 rounded-3xl overflow-hidden relative bg-[#111110] text-white border-2 border-[#111110] min-h-[400px] flex">
+      <div data-action="open-job" role="button" tabindex="0" class="group md:col-span-4 rounded-3xl overflow-hidden relative bg-[#111110] text-white border-2 border-[#111110] min-h-[400px] flex cursor-pointer">
         <img src="https://picsum.photos/seed/proofoffice/1200/800" class="absolute inset-0 w-full h-full object-cover opacity-70 img-grade group-hover:scale-105 transition-transform duration-700 ease-out" alt="" />
         <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent"></div>
         <div class="relative mt-auto p-8 w-full flex flex-wrap items-end justify-between gap-4">
@@ -155,7 +164,7 @@ tailwind.config = {
           </div>
           <span class="px-5 py-3 rounded-full bg-white text-black text-sm font-extrabold">$5 fixed • 3 min work</span>
         </div>
-      </a>
+      </div>
       <div class="md:col-span-2 rounded-3xl bg-[#D8FF3E] border-2 border-[#111110] p-8 flex flex-col justify-between min-h-[400px] sticker">
         <div>
           <p class="text-xs font-extrabold uppercase tracking-[0.2em] opacity-60">Doer cut</p>
@@ -178,7 +187,7 @@ tailwind.config = {
           <p class="text-xs font-extrabold uppercase tracking-[0.2em]">For brands</p>
           <h3 class="text-3xl font-extrabold mt-2 tracking-tight">1,000 real videos by Friday</h3>
           <p class="font-medium text-white/80 mt-3">Store checks, unboxings, street interviews. API + dashboard. From $99/mo.</p>
-          <a href="#pricing" class="mt-5 inline-block px-6 py-3 rounded-full bg-white text-black text-sm font-extrabold">Talk to sales →</a>
+          <button data-action="open-sales" class="mt-5 inline-block px-6 py-3 rounded-full bg-white text-black text-sm font-extrabold">Talk to sales →</button>
         </div>
         <div class="overflow-hidden rounded-2xl border-2 border-[#111110] h-60">
           <img src="https://picsum.photos/seed/streetcrew/800/600" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" alt="" />
@@ -217,7 +226,7 @@ tailwind.config = {
               <span id="priceOut" class="text-7xl font-extrabold text-[#D8FF3E]">$3</span>
               <span id="rushNote" class="text-sm font-bold text-white/40">standard</span>
             </div>
-            <a href="#pricing" class="mt-6 block text-center px-6 py-4 rounded-full bg-[#D8FF3E] text-black font-extrabold hover:brightness-110 transition-all">Post this job →</a>
+            <a href="#pricing" data-action="open-job" data-prefill="builder" class="mt-6 block text-center px-6 py-4 rounded-full bg-[#D8FF3E] text-black font-extrabold hover:brightness-110 transition-all">Post this job →</a>
           </div>
         </div>
       </div>
@@ -377,20 +386,20 @@ tailwind.config = {
         <p class="text-sm font-extrabold uppercase tracking-[0.18em] opacity-50">Pay as you go</p>
         <p class="mt-3"><span class="text-5xl font-extrabold">$3–$14</span></p>
         <p class="font-medium text-black/55 text-sm mt-2">Per job. Post free, pay only when claimed. Refund if no video.</p>
-        <a href="#builder" class="mt-8 text-center px-6 py-3.5 rounded-full border-2 border-[#111110] font-extrabold text-sm hover:bg-[#111110] hover:text-white transition-all">Post a job</a>
+        <button data-action="open-job" class="mt-8 text-center px-6 py-3.5 rounded-full border-2 border-[#111110] font-extrabold text-sm hover:bg-[#111110] hover:text-white transition-all w-full">Post a job</button>
       </div>
       <div class="rounded-3xl bg-[#111110] text-white p-8 flex flex-col relative border-2 border-[#111110] shadow-[8px_8px_0_#D8FF3E]">
         <span class="absolute -top-3 right-6 text-[11px] font-extrabold uppercase tracking-[0.14em] bg-[#FF5C28] border-2 border-[#111110] px-3 py-1.5 rounded-full">Most popular</span>
         <p class="text-sm font-extrabold uppercase tracking-[0.18em] text-[#D8FF3E]">Standin+ — $12/mo</p>
         <p class="mt-3"><span class="text-5xl font-extrabold">$12</span><span class="opacity-50 font-bold">/mo</span></p>
         <p class="text-white/60 font-medium text-sm mt-2">Unlimited asks, priority pickup, free rush hours. Doers still paid full price.</p>
-        <a href="#" class="mt-8 text-center px-6 py-3.5 rounded-full bg-[#D8FF3E] text-black font-extrabold text-sm hover:brightness-110 transition-all">Go unlimited</a>
+        <button data-action="open-plus" class="mt-8 text-center px-6 py-3.5 rounded-full bg-[#D8FF3E] text-black font-extrabold text-sm hover:brightness-110 transition-all w-full">Go unlimited</button>
       </div>
       <div class="rounded-3xl bg-[#7AB8FF] border-2 border-[#111110] p-8 flex flex-col sticker">
         <p class="text-sm font-extrabold uppercase tracking-[0.18em]">Business API — $99/mo</p>
         <p class="mt-3"><span class="text-5xl font-extrabold">$99</span><span class="font-bold opacity-60">/mo</span></p>
         <p class="font-medium text-black/60 text-sm mt-2">500 checks, UGC rights, dashboard. Sneaker shops, Airbnb hosts, D2C brands.</p>
-        <a href="#" class="mt-8 text-center px-6 py-3.5 rounded-full bg-[#111110] text-white font-extrabold text-sm hover:bg-black transition-all">Talk to sales</a>
+        <button data-action="open-sales" class="mt-8 text-center px-6 py-3.5 rounded-full bg-[#111110] text-white font-extrabold text-sm hover:bg-black transition-all w-full">Talk to sales</button>
       </div>
     </div>
 
@@ -398,8 +407,8 @@ tailwind.config = {
       <div class="relative">
         <h2 class="text-4xl md:text-7xl font-extrabold tracking-tight leading-[0.92] max-w-5xl mx-auto">Someone, somewhere,<br/>will do it <span class="text-[#D8FF3E]">for $3.</span></h2>
         <div class="mt-10 flex flex-col sm:flex-row justify-center gap-3">
-          <a href="#builder" class="px-8 py-4 rounded-full bg-[#D8FF3E] text-black font-extrabold border-2 border-[#D8FF3E]">Post your first job</a>
-          <a href="#money" class="px-8 py-4 rounded-full border-2 border-white/25 font-extrabold hover:border-white transition-all">Earn as a doer</a>
+          <button data-action="open-job" class="px-8 py-4 rounded-full bg-[#D8FF3E] text-black font-extrabold border-2 border-[#D8FF3E]">Post your first job</button>
+          <button data-action="open-doer" class="px-8 py-4 rounded-full border-2 border-white/25 font-extrabold hover:border-white transition-all">Earn as a doer</button>
         </div>
         <p class="mt-6 text-sm font-bold text-white/40">20% platform fee • escrowed • refund if no video</p>
       </div>
@@ -417,6 +426,99 @@ tailwind.config = {
       <div class="space-y-3"><p class="text-black/30 uppercase tracking-[0.18em] text-xs">Company</p><a href="#" class="block">Safety</a><a href="#" class="block">Contact</a><a href="#" class="block">Terms</a></div>
     </div>
   </footer>
+
+  <!-- STATUS BAR : proves state, opens My Jobs -->
+  <button data-action="open-myjobs" class="fixed bottom-4 left-4 z-[95] bg-[#111110] text-white rounded-full pl-4 pr-2 py-2 flex items-center gap-3 border-2 border-[#111110] shadow-[4px_4px_0_rgba(17,17,16,.25)]">
+    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+    <span id="statusText" class="text-[13px] font-extrabold">My jobs (0) • Free plan</span>
+    <span class="text-[12px] font-extrabold bg-[#D8FF3E] text-black rounded-full px-3 py-1.5">View</span>
+  </button>
+
+  <!-- MODAL BACKDROP -->
+  <div id="modalBackdrop" class="modal-hidden fixed inset-0 z-[120] items-center justify-center p-4 bg-black/60" style="backdrop-filter:blur(6px)">
+    <!-- POST JOB -->
+    <div id="jobModal" class="modal-hidden w-full max-w-lg bg-[#FFF8EC] border-2 border-[#111110] rounded-3xl p-7 md:p-9 shadow-[10px_10px_0_#111110] max-h-[90vh] overflow-y-auto">
+      <div class="flex items-start justify-between gap-4">
+        <div><h3 class="text-2xl font-extrabold tracking-tight">Post a job</h3><p class="text-sm font-semibold text-black/50">Money held in escrow. Refunded if nobody delivers.</p></div>
+        <button data-action="close" class="w-10 h-10 rounded-full border-2 border-[#111110] font-extrabold">×</button>
+      </div>
+      <form id="jobForm" class="mt-6 space-y-4">
+        <input id="fTitle" class="field" maxlength="90" placeholder="What should a human do? e.g. Film snow on my street" />
+        <div class="grid grid-cols-2 gap-3">
+          <select id="fCat" class="field"><option value="3">Wake-up roast — $3</option><option value="5" selected>Place check — $5</option><option value="4">Hype bundle — $4</option><option value="6">Practice pitch — $6</option><option value="9">Proposal filming — $9</option><option value="14">Queue / errand — $14</option></select>
+          <select id="fCity" class="field"><option>Lisbon</option><option>Berlin</option><option>Tokyo</option><option>Lagos</option><option>Austin</option><option>Paris</option><option>Oslo</option><option>Rotterdam</option></select>
+        </div>
+        <label class="flex items-center justify-between font-extrabold text-sm bg-white border-2 border-[#111110] rounded-2xl px-4 py-3">Rush — picked up in under 1hr (+$2)<input id="fRush" type="checkbox" class="w-5 h-5 accent-black" /></label>
+        <div class="bg-[#111110] text-white rounded-2xl p-5 flex items-center justify-between">
+          <div><p class="text-xs font-extrabold uppercase tracking-[0.18em] text-white/40">You pay</p><p id="jobPriceOut" class="text-4xl font-extrabold text-[#D8FF3E]">$5</p></div>
+          <p class="text-xs font-bold text-white/40 text-right">Doer gets <span id="jobDoerOut">$4.00</span><br/>Fee $ <span id="jobFeeOut">1.00</span></p>
+        </div>
+        <p id="jobErr" class="hidden text-sm font-bold text-red-600">Describe the job in at least 8 characters.</p>
+        <button type="submit" id="jobSubmit" class="w-full px-6 py-4 rounded-full bg-[#111110] text-white font-extrabold hover:bg-black transition-all">Pay $5 into escrow →</button>
+      </form>
+    </div>
+
+    <!-- DOER ONBOARDING -->
+    <div id="doerModal" class="modal-hidden w-full max-w-lg bg-white border-2 border-[#111110] rounded-3xl p-7 md:p-9 shadow-[10px_10px_0_#111110] max-h-[90vh] overflow-y-auto">
+      <div class="flex items-start justify-between"><div><h3 class="text-2xl font-extrabold tracking-tight">Earn as a doer</h3><p class="text-sm font-semibold text-black/50">3 steps. Most people finish in 2 minutes.</p></div><button data-action="close" class="w-10 h-10 rounded-full border-2 border-[#111110] font-extrabold">×</button></div>
+      <div class="flex gap-2 mt-5"><span id="dDot1" class="step-dot on flex-1 h-2 rounded-full"></span><span id="dDot2" class="step-dot flex-1 h-2 rounded-full"></span><span id="dDot3" class="step-dot flex-1 h-2 rounded-full"></span></div>
+      <div id="doerStep1" class="mt-6 space-y-3">
+        <input id="dName" class="field" placeholder="Display name e.g. Marta" />
+        <select id="dCity" class="field"><option>Lisbon</option><option>Berlin</option><option>Tokyo</option><option>Lagos</option><option>Austin</option><option>Paris</option></select>
+        <button data-action="doer-next-2" class="w-full px-6 py-4 rounded-full bg-[#111110] text-white font-extrabold">Continue →</button>
+      </div>
+      <div id="doerStep2" class="modal-hidden mt-6 space-y-3">
+        <div class="bg-[#FFF8EC] border-2 border-[#111110] rounded-2xl p-5 text-sm font-bold">We simulate an ID + selfie check here. No document leaves your device in this demo.</div>
+        <button id="verifyBtn" class="w-full px-6 py-4 rounded-full bg-[#D8FF3E] border-2 border-[#111110] font-extrabold">Run verification</button>
+        <div class="h-2 rounded-full bg-black/10 overflow-hidden"><div id="verifyBar" class="h-full w-0 bg-black transition-all"></div></div>
+      </div>
+      <div id="doerStep3" class="modal-hidden mt-6 text-center space-y-4">
+        <p class="text-5xl font-extrabold">80%</p>
+        <p class="font-bold">You are live. Claim any open job in the feed and get paid on delivery.</p>
+        <button data-action="doer-finish" class="w-full px-6 py-4 rounded-full bg-[#111110] text-white font-extrabold">Open live jobs</button>
+      </div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginModal" class="modal-hidden w-full max-w-md bg-white border-2 border-[#111110] rounded-3xl p-7 shadow-[10px_10px_0_#111110]">
+      <div class="flex items-start justify-between"><h3 class="text-2xl font-extrabold">Log in</h3><button data-action="close" class="w-10 h-10 rounded-full border-2 border-[#111110] font-extrabold">×</button></div>
+      <form id="loginForm" class="mt-5 space-y-3">
+        <input id="lName" class="field" placeholder="Your name" />
+        <input id="lCity" class="field" placeholder="City e.g. Berlin" />
+        <button class="w-full px-6 py-4 rounded-full bg-[#111110] text-white font-extrabold">Continue →</button>
+        <p class="text-xs font-semibold text-black/40 text-center">Demo auth — stored only in your browser.</p>
+      </form>
+    </div>
+
+    <!-- STANDIN+ CHECKOUT -->
+    <div id="plusModal" class="modal-hidden w-full max-w-md bg-[#111110] text-white border-2 border-[#111110] rounded-3xl p-7 shadow-[10px_10px_0_#D8FF3E]">
+      <div class="flex items-start justify-between"><div><h3 class="text-2xl font-extrabold">Standin+ — $12/mo</h3><p class="text-sm font-semibold text-white/50">Unlimited asks, priority pickup, free rush hours.</p></div><button data-action="close" class="w-10 h-10 rounded-full border-2 border-white/30 font-extrabold">×</button></div>
+      <form id="plusForm" class="mt-5 space-y-3">
+        <input id="cCard" inputmode="numeric" class="field !bg-white" placeholder="Card 4242 4242 4242 4242" />
+        <div class="grid grid-cols-2 gap-3"><input class="field !bg-white" placeholder="12 / 28" /><input class="field !bg-white" placeholder="CVC" /></div>
+        <button id="plusBtn" class="w-full px-6 py-4 rounded-full bg-[#D8FF3E] text-black font-extrabold">Pay $12 →</button>
+        <p class="text-xs font-semibold text-white/40 text-center">Demo checkout — no real charge.</p>
+      </form>
+    </div>
+
+    <!-- SALES -->
+    <div id="salesModal" class="modal-hidden w-full max-w-md bg-white border-2 border-[#111110] rounded-3xl p-7 shadow-[10px_10px_0_#111110]">
+      <div class="flex items-start justify-between"><h3 class="text-2xl font-extrabold">Talk to sales</h3><button data-action="close" class="w-10 h-10 rounded-full border-2 border-[#111110] font-extrabold">×</button></div>
+      <form id="salesForm" class="mt-5 space-y-3">
+        <input id="sEmail" class="field" placeholder="Work email" />
+        <input id="sCo" class="field" placeholder="Company" />
+        <button class="w-full px-6 py-4 rounded-full bg-[#111110] text-white font-extrabold">Request API demo →</button>
+      </form>
+    </div>
+
+    <!-- MY JOBS -->
+    <div id="myjobsModal" class="modal-hidden w-full max-w-lg bg-[#FFF8EC] border-2 border-[#111110] rounded-3xl p-7 shadow-[10px_10px_0_#111110] max-h-[90vh] overflow-y-auto">
+      <div class="flex items-start justify-between"><div><h3 class="text-2xl font-extrabold">My jobs</h3><p class="text-sm font-semibold text-black/50">Posted on this device. Cancel refunds escrow instantly.</p></div><button data-action="close" class="w-10 h-10 rounded-full border-2 border-[#111110] font-extrabold">×</button></div>
+      <div id="myJobsList" class="mt-5 space-y-3"></div>
+    </div>
+  </div>
+
+  <div id="toastRoot" class="fixed bottom-4 right-4 z-[130] space-y-2 w-[calc(100%-2rem)] max-w-sm"></div>
 </main>
 
 <script>
@@ -499,6 +601,150 @@ setInterval(() => {
   li = (li + 1) % lines.length;
   document.getElementById("liveLine").textContent = lines[li];
 }, 3200);
+<script>
+(function(){
+  const $ = (s) => document.querySelector(s);
+  const store = {
+    load(){ try { return JSON.parse(localStorage.getItem("standin_v1")) || { user:null, plan:"free", doer:null, jobs:[] }; } catch(e){ return { user:null, plan:"free", doer:null, jobs:[] }; } },
+    save(s){ localStorage.setItem("standin_v1", JSON.stringify(s)); }
+  };
+  let state = store.load();
+  const backdrop = $("#modalBackdrop");
+  const panels = ["jobModal","doerModal","loginModal","plusModal","salesModal","myjobsModal"];
+
+  function toast(msg, accent){
+    const t = document.createElement("div");
+    t.className = "toast bg-[#111110] text-white rounded-2xl px-5 py-4 text-sm font-bold border-2 border-[#111110]";
+    t.innerHTML = (accent ? '<span class="inline-block px-2 py-0.5 rounded-full bg-[#D8FF3E] text-black text-xs font-extrabold mr-2">DONE</span>' : "") + msg;
+    $("#toastRoot").appendChild(t);
+    setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity .3s"; setTimeout(() => t.remove(), 320); }, 3400);
+  }
+  function openPanel(id){
+    backdrop.classList.remove("modal-hidden"); backdrop.classList.add("modal-open");
+    panels.forEach(p => document.getElementById(p).classList.add("modal-hidden"));
+    if(id) document.getElementById(id).classList.remove("modal-hidden");
+  }
+  function closeAll(){ backdrop.classList.add("modal-hidden"); backdrop.classList.remove("modal-open"); }
+  backdrop.addEventListener("click", (e) => { if(e.target === backdrop) closeAll(); });
+  document.addEventListener("keydown", (e) => { if(e.key === "Escape") closeAll(); });
+
+  function refreshStatus(){
+    const plan = state.plan === "plus" ? "Standin+ active" : "Free plan";
+    $("#statusText").textContent = "My jobs (" + state.jobs.length + ") • " + plan + (state.doer ? " • Earning" : "");
+    const loginBtn = document.querySelector('[data-nav="login"]');
+    if(loginBtn) loginBtn.textContent = state.user ? ("Hi, " + state.user.name) : "Log in";
+  }
+
+  function renderMyJobs(){
+    const list = $("#myJobsList");
+    if(!state.jobs.length){ list.innerHTML = '<p class="font-bold text-black/40 text-sm">Nothing yet. Post your first job — money is only held, never taken, until video lands.</p>'; return; }
+    list.innerHTML = "";
+    state.jobs.slice().reverse().forEach(j => {
+      const row = document.createElement("div");
+      row.className = "bg-white border-2 border-[#111110] rounded-2xl p-4 flex items-center justify-between gap-3";
+      row.innerHTML = '<div><p class="font-extrabold text-sm">' + j.title.replace(/</g,"&lt;") + '</p><p class="text-xs font-bold text-black/45">' + j.city + ' • $' + j.price + ' • ' + j.status + '</p></div>'
+        + (j.status === "open" ? '<button data-cancel="' + j.id + '" class="text-xs font-extrabold px-3 py-2 rounded-full border-2 border-[#111110]">Cancel + refund</button>' : '<span class="text-xs font-extrabold text-black/40">' + j.status + '</span>');
+      list.appendChild(row);
+    });
+  }
+
+  function updateJobPrice(){
+    const p = parseInt($("#fCat").value, 10) + ($("#fRush").checked ? 2 : 0);
+    $("#jobPriceOut").textContent = "$" + p;
+    $("#jobDoerOut").textContent = "$" + (p * 0.8).toFixed(2);
+    $("#jobFeeOut").textContent = (p * 0.2).toFixed(2);
+    $("#jobSubmit").textContent = "Pay $" + p + " into escrow →";
+  }
+  $("#fCat").addEventListener("change", updateJobPrice);
+  $("#fRush").addEventListener("change", updateJobPrice);
+  updateJobPrice();
+
+  document.addEventListener("click", (e) => {
+    const el = e.target.closest("[data-action]");
+    if(!el) {
+      const cancel = e.target.closest("[data-cancel]");
+      if(cancel){
+        const job = state.jobs.find(j => j.id === cancel.dataset.cancel);
+        if(job){ job.status = "refunded"; store.save(state); }
+        renderMyJobs(); refreshStatus();
+        toast("Cancelled. Escrow refunded instantly.", true);
+      }
+      return;
+    }
+    const a = el.dataset.action;
+    if(a === "open-job"){ openPanel("jobModal"); setTimeout(() => $("#fTitle").focus(), 50); }
+    if(a === "open-doer"){ openPanel("doerModal"); }
+    if(a === "open-login"){ openPanel(state.user ? "myjobsModal" : "loginModal"); if(state.user) renderMyJobs(); }
+    if(a === "open-plus"){ openPanel("plusModal"); }
+    if(a === "open-sales"){ openPanel("salesModal"); }
+    if(a === "open-myjobs"){ renderMyJobs(); openPanel("myjobsModal"); }
+    if(a === "close"){ closeAll(); }
+    if(a === "doer-next-2"){
+      if(!$("#dName").value.trim()){ toast("Add a display name first."); return; }
+      $("#doerStep1").classList.add("modal-hidden"); $("#doerStep2").classList.remove("modal-hidden");
+      $("#dDot2").classList.add("on");
+    }
+    if(a === "doer-finish"){ closeAll(); document.getElementById("live").scrollIntoView({behavior:"smooth"}); }
+  });
+  document.addEventListener("keydown", (e) => {
+    if((e.key === "Enter" || e.key === " ") && e.target.matches('[role="button"]')){ e.preventDefault(); openPanel("jobModal"); }
+  });
+
+  $("#jobForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const title = $("#fTitle").value.trim();
+    if(title.length < 8){ $("#jobErr").classList.remove("hidden"); return; }
+    $("#jobErr").classList.add("hidden");
+    const price = parseInt($("#fCat").value, 10) + ($("#fRush").checked ? 2 : 0);
+    const job = { id: "j" + Date.now().toString(36), title, city: $("#fCity").value, price, status: "open" };
+    state.jobs.push(job); store.save(state);
+    renderMyJobs(); refreshStatus(); closeAll();
+    const live = $("#liveLine"); if(live) live.textContent = "You just posted \"" + title.slice(0,42) + "\" — $" + price;
+    toast("Job live in the feed. Escrow held $" + price + ".", true);
+    document.getElementById("live").scrollIntoView({behavior:"smooth"});
+  });
+
+  $("#verifyBtn").addEventListener("click", () => {
+    let p = 0;
+    const bar = $("#verifyBar");
+    const iv = setInterval(() => {
+      p += 20; bar.style.width = p + "%";
+      if(p >= 100){ clearInterval(iv);
+        state.doer = { name: $("#dName").value.trim(), city: $("#dCity").value };
+        store.save(state); refreshStatus();
+        $("#doerStep2").classList.add("modal-hidden"); $("#doerStep3").classList.remove("modal-hidden"); $("#dDot3").classList.add("on");
+        toast("Verified. You can now claim paid jobs.", true);
+      }
+    }, 220);
+  });
+
+  $("#loginForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if(!$("#lName").value.trim()){ toast("Add your name to continue."); return; }
+    state.user = { name: $("#lName").value.trim(), city: $("#lCity").value.trim() || "Berlin" };
+    store.save(state); refreshStatus(); closeAll();
+    toast("Logged in as " + state.user.name + ". Jobs save to this device.", true);
+  });
+
+  $("#plusForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if(($("#cCard").value.replace(/\D/g,"")).length < 12){ toast("Use any 12+ digit test card, e.g. 4242…"); return; }
+    const btn = $("#plusBtn"); btn.textContent = "Processing…"; btn.disabled = true;
+    setTimeout(() => {
+      state.plan = "plus"; store.save(state); refreshStatus(); closeAll();
+      btn.textContent = "Pay $12 →"; btn.disabled = false;
+      toast("Standin+ active. Unlimited asks, priority pickup.", true);
+    }, 1100);
+  });
+
+  $("#salesForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if(!$("#sEmail").value.includes("@")){ toast("Add a valid work email."); return; }
+    closeAll(); toast("Request received. Demo link sent to " + $("#sEmail").value + ".", true);
+  });
+
+  renderMyJobs(); refreshStatus();
+})();
 </script>
 </body>
 </html>
