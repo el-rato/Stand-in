@@ -13,7 +13,6 @@ async function getApp() {
   });
   return appPromise;
 }
-
 export default async function handler(req, res) {
   if (req.url === '/ready') {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -38,5 +37,3 @@ export default async function handler(req, res) {
   }
 }
 
-// Let Express parse bodies itself (needed for the Stripe raw-body webhook).
-export const config = { api: { bodyParser: false } };
