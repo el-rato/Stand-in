@@ -2,6 +2,10 @@
   "name": "standin",
   "private": true,
   "type": "module",
+  "scripts": {
+    "build": "npm run syntax --workspace backend",
+    "test": "npm test --workspace backend"
+  },
   "workspaces": [
     "backend"
   ]
