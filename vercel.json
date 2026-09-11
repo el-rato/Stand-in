@@ -2,6 +2,7 @@
   "routes": [
     { "src": "^/(backend|node_modules)(/.*)?$", "status": 404 },
     { "handle": "filesystem" },
+    { "src": "^/(health|ready)$", "dest": "/api/index" },
     { "src": "/api/(.*)", "dest": "/api/index" }
   ]
 }
