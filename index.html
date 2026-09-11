@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>STANDIN — Pay a human anywhere $3 to do it on camera</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { grotesk: ['"Cabinet Grotesk"','Outfit','sans-serif'] },
+      colors: { ink:'#111110', bone:'#FFF8EC', lime:'#D8FF3E', tang:'#FF5C28', sky:'#7AB8FF', card:'#151412' }
+    }
+  }
+}
+</script>
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+  * { font-family: 'Cabinet Grotesk', 'Outfit', sans-serif; }
+  body { background:#FFF8EC; color:#111110; overflow-x:hidden; }
+  ::selection { background:#111110; color:#D8FF3E; }
+  .hero-h1 { font-size: clamp(3rem, 5vw, 5.5rem); line-height:.92; letter-spacing:-.045em; }
+  .grain::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:90;opacity:.06;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  .sticker { box-shadow: 4px 4px 0 #111110; }
+  @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  .marquee-track{ animation: marquee 26s linear infinite; }
+  @keyframes floaty {0%,100%{transform:translateY(0) rotate(var(--r,0deg))}50%{transform:translateY(-12px) rotate(var(--r,0deg))} }
+  .floaty{ animation: floaty 5s ease-in-out infinite; }
+  .accordion-slice{ transition:flex .7s cubic-bezier(.22,1,.36,1); flex:1; }
+  .accordion-slice:hover{ flex:3.4; }
+  .accordion-slice .slice-content{ opacity:0; transform:translateY(14px); transition:all .5s ease .15s; }
+  .accordion-slice:hover .slice-content{ opacity:1; transform:translateY(0); }
+  .stack-card{ position:sticky; top:110px; }
+  .tape{ position:absolute; top:-12px; left:50%; transform:translateX(-50%) rotate(-3deg); background:#D8FF3E; border:2px solid #111110; font-size:11px; font-weight:800; letter-spacing:.12em; padding:4px 12px; border-radius:999px; white-space:nowrap; }
+  input[type=range]{ -webkit-appearance:none; height:3px; background:rgba(17,17,16,.18); border-radius:999px; }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:24px; height:24px; border-radius:999px; background:#111110; cursor:pointer; border:3px solid #D8FF3E; box-shadow:0 0 0 2px #111110; }
+  .img-grade{ filter: contrast(1.08) saturate(1.05); }
+</style>
+</head>
+<body class="grain antialiased">
+<main class="overflow-x-hidden w-full max-w-full">
+
+  <!-- NAV -->
+  <header class="fixed top-4 left-0 right-0 z-[100] px-4 flex justify-center">
+    <nav class="w-full max-w-5xl rounded-full bg-white/85 border-2 border-[#111110] pl-5 pr-2 py-2 flex items-center justify-between shadow-[6px_6px_0_#111110]" style="backdrop-filter:blur(16px)">
+      <a href="#" class="flex items-center gap-2">
+        <span class="w-9 h-9 rounded-full bg-[#111110] text-[#D8FF3E] grid place-items-center font-extrabold text-lg">S</span>
+        <span class="font-extrabold tracking-tight text-lg">STANDIN</span>
+        <span class="hidden md:inline text-[11px] font-bold uppercase tracking-[0.18em] bg-[#D8FF3E] border border-[#111110] rounded-full px-2.5 py-1 ml-1">humans on demand</span>
+      </a>
+      <div class="hidden md:flex items-center gap-7 text-[14px] font-semibold">
+        <a href="#money" class="hover:underline underline-offset-4">What sells</a>
+        <a href="#builder" class="hover:underline underline-offset-4">Price it</a>
+        <a href="#live" class="hover:underline underline-offset-4">Live jobs</a>
+        <a href="#pricing" class="hover:underline underline-offset-4">Pricing</a>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="#builder" class="hidden sm:inline-block text-sm font-bold px-4 py-2.5">Log in</a>
+        <a href="#builder" class="text-sm font-extrabold px-5 py-2.5 rounded-full bg-[#111110] text-white hover:bg-black transition-all">Get a human</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ATTENTION : artistic asymmetry -->
+  <section class="relative pt-32 md:pt-40 pb-16 md:pb-24 px-5 md:px-12 max-w-7xl mx-auto grid lg:grid-cols-[1.05fr_0.95fr] gap-12 items-center min-h-[92vh]">
+    <div class="relative z-10">
+      <div class="inline-flex items-center gap-2 bg-white border-2 border-[#111110] rounded-full pl-2 pr-4 py-1.5 sticker mb-7">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-[12px] font-extrabold uppercase tracking-[0.16em]">Live now — humans taking jobs</span>
+      </div>
+      <h1 class="hero-h1 font-extrabold w-full max-w-5xl">
+        Pay a stranger $3 to do it
+        <span class="inline-block w-24 md:w-32 h-[0.68em] rounded-full align-middle bg-cover bg-center mx-2 border-2 border-[#111110]" style="background-image:url('https://picsum.photos/seed/parisbalcony/400/200')"></span>
+        on camera.
+      </h1>
+      <p class="mt-7 text-lg md:text-xl leading-relaxed text-[#111110]/65 max-w-xl">Wake-up roasts, queue spots, bar checks, proposals in Paris, practice pitches. Ask in one sentence. Video back in minutes.</p>
+      <div class="mt-9 flex flex-col sm:flex-row gap-3">
+        <a href="#builder" class="px-8 py-4 rounded-full bg-[#111110] text-white font-extrabold text-[15px] text-center border-2 border-[#111110] shadow-[5px_5px_0_#D8FF3E] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">Ask for anything — from $3</a>
+        <a href="#pricing" class="px-8 py-4 rounded-full bg-white text-[#111110] font-extrabold text-[15px] text-center border-2 border-[#111110] hover:bg-[#D8FF3E] transition-all">Film and earn</a>
+      </div>
+      <div class="mt-8 flex flex-wrap gap-2 text-[13px] font-bold">
+        <span class="px-3 py-1.5 rounded-full bg-white border border-[#111110]/20">No skills needed</span>
+        <span class="px-3 py-1.5 rounded-full bg-white border border-[#111110]/20">Legal only, ID-checked</span>
+        <span class="px-3 py-1.5 rounded-full bg-white border border-[#111110]/20">Refund if no video</span>
+      </div>
+    </div>
+
+    <!-- overlapping floating collage -->
+    <div class="relative h-[560px] hidden lg:block" id="heroCollage">
+      <div class="floaty absolute top-2 left-6 w-72 rounded-3xl overflow-hidden border-2 border-[#111110] sticker bg-white" style="--r:-4deg; transform:rotate(-4deg)">
+        <img src="https://picsum.photos/seed/standparis/600/700" class="w-full h-64 object-cover img-grade" alt="Paris proposal" />
+        <div class="p-4 flex items-center justify-between">
+          <div><p class="font-extrabold text-sm leading-tight">Proposal filmed, Eiffel side street</p><p class="text-xs text-black/50 font-semibold">Delivered in 22 min</p></div>
+          <span class="text-xs font-extrabold bg-[#D8FF3E] border border-[#111110] rounded-full px-2.5 py-1">$9</span>
+        </div>
+      </div>
+      <div class="floaty absolute top-48 right-0 w-80 rounded-3xl overflow-hidden border-2 border-[#111110] sticker bg-white" style="--r:3deg; transform:rotate(3deg); animation-delay:.8s">
+        <img src="https://picsum.photos/seed/standqueue/600/500" class="w-full h-56 object-cover img-grade" alt="Queue spot" />
+        <div class="p-4 flex items-center justify-between">
+          <div><p class="font-extrabold text-sm leading-tight">Queued 2hrs for sneaker drop</p><p class="text-xs text-black/50 font-semibold">Video proof + receipt</p></div>
+          <span class="text-xs font-extrabold bg-[#FF5C28] text-white border border-[#111110] rounded-full px-2.5 py-1">$14</span>
+        </div>
+      </div>
+      <div class="floaty absolute bottom-0 left-16 w-64 rounded-3xl overflow-hidden border-2 border-[#111110] sticker bg-[#111110] text-white" style="--r:-2deg; transform:rotate(-2deg); animation-delay:1.6s">
+        <div class="p-5">
+          <p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#D8FF3E]">Wake-up roast</p>
+          <p class="font-extrabold text-lg leading-tight mt-1">"Get up. Your dreams need you poorer."</p>
+          <p class="text-xs text-white/50 font-semibold mt-2">Marta, Lisbon • 4.98 rating</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- mobile collage fallback -->
+    <div class="lg:hidden grid grid-cols-2 gap-3">
+      <img src="https://picsum.photos/seed/standparis/600/700" class="rounded-2xl border-2 border-[#111110] h-56 w-full object-cover" alt="" />
+      <img src="https://picsum.photos/seed/standqueue/600/500" class="rounded-2xl border-2 border-[#111110] h-56 w-full object-cover" alt="" />
+    </div>
+  </section>
+
+  <!-- MARQUEE : prices -->
+  <div class="bg-[#111110] text-white py-4 overflow-hidden border-y-2 border-[#111110] -rotate-1 scale-[1.02]">
+    <div class="marquee-track flex w-max whitespace-nowrap font-extrabold text-[15px] tracking-wide">
+      <div class="flex gap-8 pr-8">
+        <span>$3 WAKE-UP ROAST</span><span class="text-[#D8FF3E]">●</span><span>$5 BAR CHECK</span><span class="text-[#FF5C28]">●</span><span>$9 PROPOSAL FILMING</span><span class="text-[#7AB8FF]">●</span><span>$4 HYPE BUNDLE</span><span class="text-[#D8FF3E]">●</span><span>$14 QUEUE SPOT</span><span class="text-[#FF5C28]">●</span><span>$6 PRACTICE MY PITCH</span><span class="text-[#7AB8FF]">●</span>
+      </div>
+      <div class="flex gap-8 pr-8" aria-hidden="true">
+        <span>$3 WAKE-UP ROAST</span><span class="text-[#D8FF3E]">●</span><span>$5 BAR CHECK</span><span class="text-[#FF5C28]">●</span><span>$9 PROPOSAL FILMING</span><span class="text-[#7AB8FF]">●</span><span>$4 HYPE BUNDLE</span><span class="text-[#D8FF3E]">●</span><span>$14 QUEUE SPOT</span><span class="text-[#FF5C28]">●</span><span>$6 PRACTICE MY PITCH</span><span class="text-[#7AB8FF]">●</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- INTEREST : gapless bento -->
+  <section id="money" class="py-32 md:py-48 px-5 md:px-12 max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+      <h2 class="text-4xl md:text-6xl font-extrabold tracking-tight leading-[0.95] max-w-3xl">Stupid-simple jobs that
+        <span class="inline-block w-20 h-9 rounded-full align-middle bg-cover bg-center mx-1 border-2 border-[#111110]" style="background-image:url('https://picsum.photos/seed/crowdproof/300/150')"></span>
+        print money.</h2>
+      <p class="max-w-sm font-medium text-black/55 leading-relaxed">No talent required. If you own a phone and can walk outside, you can earn today. Buyers pay first, money held until video lands.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-6 grid-flow-dense gap-4">
+      <a href="#builder" class="group md:col-span-4 rounded-3xl overflow-hidden relative bg-[#111110] text-white border-2 border-[#111110] min-h-[400px] flex">
+        <img src="https://picsum.photos/seed/proofoffice/1200/800" class="absolute inset-0 w-full h-full object-cover opacity-70 img-grade group-hover:scale-105 transition-transform duration-700 ease-out" alt="" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent"></div>
+        <div class="relative mt-auto p-8 w-full flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <span class="text-[11px] font-extrabold uppercase tracking-[0.18em] bg-[#D8FF3E] text-black px-3 py-1.5 rounded-full">Highest volume</span>
+            <h3 class="text-3xl font-extrabold mt-3">Proof-of-place checks</h3>
+            <p class="text-white/60 font-medium">Is the bar busy? Is my Airbnb real? 40-sec video.</p>
+          </div>
+          <span class="px-5 py-3 rounded-full bg-white text-black text-sm font-extrabold">$5 fixed • 3 min work</span>
+        </div>
+      </a>
+      <div class="md:col-span-2 rounded-3xl bg-[#D8FF3E] border-2 border-[#111110] p-8 flex flex-col justify-between min-h-[400px] sticker">
+        <div>
+          <p class="text-xs font-extrabold uppercase tracking-[0.2em] opacity-60">Doer cut</p>
+          <p class="text-7xl font-extrabold tracking-tight">80<span class="text-3xl align-top">%</span></p>
+          <p class="font-bold leading-snug mt-2">Film it, get paid in minutes. We take 20% and handle refunds, fraud, tax.</p>
+        </div>
+        <div class="bg-[#111110] text-white rounded-2xl p-4 text-sm font-bold flex justify-between"><span>Tonight in Lisbon</span><span class="text-[#D8FF3E]">€312 paid</span></div>
+      </div>
+      <div class="md:col-span-2 rounded-3xl bg-white border-2 border-[#111110] p-8 min-h-[360px] flex flex-col justify-between sticker overflow-hidden relative group">
+        <img src="https://picsum.photos/seed/hypeface/600/500" class="absolute inset-0 w-full h-full object-cover opacity-15 grayscale group-hover:scale-105 transition-transform duration-700 ease-out" alt="" />
+        <div class="relative">
+          <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#FF5C28]">Most gifted</p>
+          <h3 class="text-2xl font-extrabold mt-2 leading-tight">Hype bundles</h3>
+          <p class="font-medium text-black/55 text-sm mt-2">10 strangers scream your name before your interview. Impossible not to share.</p>
+        </div>
+        <span class="relative font-extrabold text-sm">From $4 →</span>
+      </div>
+      <div class="group md:col-span-4 rounded-3xl bg-[#FF5C28] text-white border-2 border-[#111110] p-8 md:p-10 min-h-[360px] grid md:grid-cols-2 gap-8 items-center sticker">
+        <div>
+          <p class="text-xs font-extrabold uppercase tracking-[0.2em]">For brands</p>
+          <h3 class="text-3xl font-extrabold mt-2 tracking-tight">1,000 real videos by Friday</h3>
+          <p class="font-medium text-white/80 mt-3">Store checks, unboxings, street interviews. API + dashboard. From $99/mo.</p>
+          <a href="#pricing" class="mt-5 inline-block px-6 py-3 rounded-full bg-white text-black text-sm font-extrabold">Talk to sales →</a>
+        </div>
+        <div class="overflow-hidden rounded-2xl border-2 border-[#111110] h-60">
+          <img src="https://picsum.photos/seed/streetcrew/800/600" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" alt="" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUILDER : price estimator -->
+  <section id="builder" class="py-32 md:py-48 px-5 md:px-12 max-w-6xl mx-auto">
+    <div class="bg-white border-2 border-[#111110] rounded-[2rem] p-8 md:p-14 shadow-[10px_10px_0_#111110] relative">
+      <span class="tape">Try it — 20 seconds</span>
+      <div class="grid md:grid-cols-2 gap-10 mt-4">
+        <div>
+          <h2 class="text-3xl md:text-5xl font-extrabold tracking-tight leading-[0.95]">Price your ask.</h2>
+          <p class="font-medium text-black/55 mt-4">Pick a job. We suggest the price that gets picked up in under 15 minutes.</p>
+          <div class="grid grid-cols-2 gap-2 mt-6" id="jobBtns">
+            <button data-price="3" data-label="Wake-up roast call" class="job-btn px-4 py-3 rounded-2xl border-2 border-[#111110] font-extrabold text-sm bg-[#111110] text-white">Wake-up roast</button>
+            <button data-price="5" data-label="Bar / place check" class="job-btn px-4 py-3 rounded-2xl border-2 border-[#111110] font-extrabold text-sm bg-white">Place check</button>
+            <button data-price="4" data-label="Hype bundle x10" class="job-btn px-4 py-3 rounded-2xl border-2 border-[#111110] font-extrabold text-sm bg-white">Hype bundle</button>
+            <button data-price="14" data-label="Queue / errand" class="job-btn px-4 py-3 rounded-2xl border-2 border-[#111110] font-extrabold text-sm bg-white">Queue spot</button>
+            <button data-price="9" data-label="Proposal filming" class="job-btn px-4 py-3 rounded-2xl border-2 border-[#111110] font-extrabold text-sm bg-white">Proposal</button>
+            <button data-price="6" data-label="Practice my pitch" class="job-btn px-4 py-3 rounded-2xl border-2 border-[#111110] font-extrabold text-sm bg-white">Practice pitch</button>
+          </div>
+          <label class="flex items-center justify-between mt-6 font-extrabold text-sm">Need it in under 1 hour? <input id="rushToggle" type="checkbox" class="w-6 h-6 accent-black" /></label>
+          <input id="askInput" type="text" placeholder="e.g. Film my name in snow in Oslo tonight" class="mt-4 w-full border-2 border-[#111110] rounded-2xl px-5 py-4 font-semibold placeholder:text-black/30 focus:outline-none focus:bg-[#D8FF3E]/20" />
+        </div>
+        <div class="bg-[#111110] text-white rounded-3xl p-8 flex flex-col justify-between min-h-[380px]">
+          <div>
+            <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-white/40">Your ask</p>
+            <p id="askPreview" class="text-2xl font-extrabold leading-tight mt-3">Wake-up roast call</p>
+            <p class="text-white/50 font-medium text-sm mt-2">Money held. Refunded if nobody picks it up.</p>
+          </div>
+          <div>
+            <div class="flex items-baseline gap-2">
+              <span id="priceOut" class="text-7xl font-extrabold text-[#D8FF3E]">$3</span>
+              <span id="rushNote" class="text-sm font-bold text-white/40">standard</span>
+            </div>
+            <a href="#pricing" class="mt-6 block text-center px-6 py-4 rounded-full bg-[#D8FF3E] text-black font-extrabold hover:brightness-110 transition-all">Post this job →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DESIRE : scrub reveal -->
+  <section class="py-32 md:py-48 px-6 bg-[#0B0B0D] text-[#F5F3EE] border-y-2 border-[#111110] relative overflow-hidden">
+    <div class="max-w-4xl mx-auto text-center relative">
+      <p class="text-[12px] uppercase tracking-[0.3em] text-white/40 mb-10">Why strangers beat apps</p>
+      <p id="scrubText" class="text-3xl md:text-5xl font-medium leading-[1.15] tracking-tight">
+        No review queue. No gig profile. Just a human, a phone, and eleven minutes between your ask and your video.
+      </p>
+    </div>
+  </section>
+
+  <!-- DESIRE : pinned split -->
+  <section id="how" class="py-32 md:py-48 px-5 md:px-12 max-w-7xl mx-auto grid md:grid-cols-[1fr_1.2fr] gap-12">
+    <div class="md:sticky md:top-28 self-start">
+      <h2 class="text-4xl md:text-6xl font-extrabold tracking-tight leading-[0.92]">How money<br/>moves in<br/><span class="text-[#FF5C28]">this market.</span></h2>
+      <p class="mt-6 font-medium text-black/55 max-w-sm">Buyers pay first. Doers keep 80% of every unlock. Payouts land every Friday.</p>
+      <div class="mt-8 rounded-2xl bg-white border-2 border-[#111110] p-6 sticker">
+        <label class="text-xs font-extrabold uppercase tracking-[0.2em] text-black/40">Doer calculator — jobs per week: <span id="jobN" class="text-black">10</span></label>
+        <input id="earnRange" type="range" min="2" max="60" value="10" class="w-full mt-3" />
+        <p class="font-extrabold text-2xl mt-2">You keep <span id="earnOut" class="bg-[#D8FF3E] px-2 border border-[#111110] rounded-lg">$48</span>/week <span class="text-sm font-bold opacity-50">at $6 avg × 80% — <span id="listenOut">from 10 jobs</span></span></p>
+      </div>
+    </div>
+    <div class="space-y-6">
+      <div class="scale-fade-img overflow-hidden rounded-3xl border-2 border-[#111110] h-[420px] relative group">
+        <img src="https://picsum.photos/seed/nightrail/1000/800" class="w-full h-full object-cover img-grade group-hover:scale-105 transition-transform duration-700 ease-out" alt="Night rail" />
+        <div class="absolute bottom-0 inset-x-0 p-7 bg-gradient-to-t from-black/80 to-transparent text-white flex justify-between items-end">
+          <div><p class="font-extrabold text-xl">1. Ask in one sentence</p><p class="text-white/60 text-sm">Typed in seconds, priced instantly</p></div>
+          <span class="text-xs px-4 py-2 rounded-full bg-white/10 border border-white/20">30 sec</span>
+        </div>
+      </div>
+      <div class="scale-fade-img overflow-hidden rounded-3xl border-2 border-[#111110] h-[420px] relative group">
+        <img src="https://picsum.photos/seed/fogpier/1000/800" class="w-full h-full object-cover img-grade group-hover:scale-105 transition-transform duration-700 ease-out" alt="Fog pier" />
+        <div class="absolute bottom-0 inset-x-0 p-7 bg-gradient-to-t from-black/80 to-transparent text-white flex justify-between items-end">
+          <div><p class="font-extrabold text-xl">2. A human claims it</p><p class="text-white/60 text-sm">First verified doer nearby wins</p></div>
+          <span class="text-xs px-4 py-2 rounded-full bg-[#D8FF3E] text-black font-extrabold">~11 min</span>
+        </div>
+      </div>
+      <div class="scale-fade-img overflow-hidden rounded-3xl border-2 border-[#111110] h-[420px] relative group">
+        <img src="https://picsum.photos/seed/desertstop/1000/800" class="w-full h-full object-cover img-grade group-hover:scale-105 transition-transform duration-700 ease-out" alt="Desert stop" />
+        <div class="absolute bottom-0 inset-x-0 p-7 bg-gradient-to-t from-black/80 to-transparent text-white flex justify-between items-end">
+          <div><p class="font-extrabold text-xl">3. Video lands, doer paid</p><p class="text-white/60 text-sm">Approve to release the 80%</p></div>
+          <span class="text-xs px-4 py-2 rounded-full bg-white text-black font-extrabold">Done</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DESIRE : live feed -->
+  <section id="live" class="py-32 md:py-48 px-5 md:px-12 max-w-7xl mx-auto">
+    <div class="flex items-end justify-between mb-10">
+      <h2 class="text-4xl md:text-6xl font-extrabold tracking-tight">The feed<br/>never sleeps.</h2>
+      <span class="text-xs font-extrabold px-3 py-1.5 rounded-full bg-white border-2 border-[#111110]"><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1.5"></span>demo feed</span>
+    </div>
+    <div class="space-y-4" id="jobFeed">
+      <div class="scale-fade-img group bg-white border-2 border-[#111110] rounded-3xl overflow-hidden flex gap-4 p-4 items-center">
+        <img src="https://picsum.photos/seed/jobtokyo/400/400" class="w-28 h-28 rounded-2xl object-cover border border-[#111110] group-hover:scale-105 transition-transform duration-700 ease-out" alt="" />
+        <div class="flex-1"><p class="font-extrabold">Write "MARRY ME ANA" in Shibuya crossing</p><p class="text-sm font-semibold text-black/50">Tokyo • delivered in 11 min • video 0:47</p></div>
+        <span class="font-extrabold text-sm bg-[#D8FF3E] border border-[#111110] rounded-full px-3 py-1.5">$9</span>
+      </div>
+      <div class="scale-fade-img group bg-white border-2 border-[#111110] rounded-3xl overflow-hidden flex gap-4 p-4 items-center">
+        <img src="https://picsum.photos/seed/jobbar/400/400" class="w-28 h-28 rounded-2xl object-cover border border-[#111110] group-hover:scale-105 transition-transform duration-700 ease-out" alt="" />
+        <div class="flex-1"><p class="font-extrabold">Is Berghain line shorter than 1hr right now?</p><p class="text-sm font-semibold text-black/50">Berlin • delivered in 6 min • video 0:32</p></div>
+        <span class="font-extrabold text-sm bg-white border border-[#111110] rounded-full px-3 py-1.5">$5</span>
+      </div>
+      <div class="scale-fade-img group bg-white border-2 border-[#111110] rounded-3xl overflow-hidden flex gap-4 p-4 items-center">
+        <img src="https://picsum.photos/seed/jobsing/400/400" class="w-28 h-28 rounded-2xl object-cover border border-[#111110] group-hover:scale-105 transition-transform duration-700 ease-out" alt="" />
+        <div class="flex-1"><p class="font-extrabold">10 hype videos before my driving test</p><p class="text-sm font-semibold text-black/50">Lagos • delivered in 19 min • 10 videos</p></div>
+        <span class="font-extrabold text-sm bg-[#FF5C28] text-white border border-[#111110] rounded-full px-3 py-1.5">$4</span>
+      </div>
+      <div class="scale-fade-img group bg-white border-2 border-[#111110] rounded-3xl overflow-hidden flex gap-4 p-4 items-center">
+        <img src="https://picsum.photos/seed/jobdog/400/400" class="w-28 h-28 rounded-2xl object-cover border border-[#111110] group-hover:scale-105 transition-transform duration-700 ease-out" alt="" />
+        <div class="flex-1"><p class="font-extrabold">Walk my dog virtually, tell him I miss him</p><p class="text-sm font-semibold text-black/50">Austin • delivered in 14 min • video 1:12</p></div>
+        <span class="font-extrabold text-sm bg-[#7AB8FF] border border-[#111110] rounded-full px-3 py-1.5">$6</span>
+      </div>
+      <div id="liveFeedBox" class="bg-[#D8FF3E] border-2 border-[#111110] rounded-3xl p-5 font-bold text-sm sticker">LIVE: <span id="liveLine">Sofia just claimed "sing happy birthday in a bakery" — $3</span></div>
+    </div>
+  </section>
+
+  <!-- COMPONENT : horizontal accordion -->
+  <section class="py-32 md:py-48 px-5 md:px-12 max-w-7xl mx-auto">
+    <h2 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-4">Who is it actually for?</h2>
+    <p class="font-medium text-black/55 mb-10 max-w-xl">Hover each lane. If you recognise yourself, you are the mass market.</p>
+    <div class="flex flex-col md:flex-row gap-3 h-auto md:h-[520px]">
+      <div class="accordion-slice group relative rounded-3xl overflow-hidden min-h-[240px] border-2 border-[#111110]">
+        <img src="https://picsum.photos/seed/lanestudent/600/900" class="absolute inset-0 w-full h-full object-cover" alt="" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent"></div>
+        <div class="absolute bottom-0 p-7 text-white">
+          <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#D8FF3E]">Students</p>
+          <h3 class="text-2xl font-extrabold">Hype + practice</h3>
+          <div class="slice-content text-sm font-medium text-white/75 mt-2 max-w-[250px]">Mock interviews, language practice, 2AM motivation. Cheaper than coffee. <span class="block mt-3"><span class="px-4 py-2 rounded-full bg-white text-black text-xs font-extrabold">From $3</span></span></div>
+        </div>
+      </div>
+      <div class="accordion-slice group relative rounded-3xl overflow-hidden min-h-[240px] border-2 border-[#111110]">
+        <img src="https://picsum.photos/seed/lanelove/600/900" class="absolute inset-0 w-full h-full object-cover" alt="" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent"></div>
+        <div class="absolute bottom-0 p-7 text-white">
+          <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#FF5C28]">Romantics</p>
+          <h3 class="text-2xl font-extrabold">Grand gestures</h3>
+          <div class="slice-content text-sm font-medium text-white/75 mt-2 max-w-[250px]">Proposals, birthdays, apologies filmed where it matters. <span class="block mt-3"><span class="px-4 py-2 rounded-full bg-white text-black text-xs font-extrabold">From $9</span></span></div>
+        </div>
+      </div>
+      <div class="accordion-slice group relative rounded-3xl overflow-hidden min-h-[240px] border-2 border-[#111110]">
+        <img src="https://picsum.photos/seed/lanetravel/600/900" class="absolute inset-0 w-full h-full object-cover" alt="" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent"></div>
+        <div class="absolute bottom-0 p-7 text-white">
+          <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#7AB8FF]">Travelers</p>
+          <h3 class="text-2xl font-extrabold">Eyes on ground</h3>
+          <div class="slice-content text-sm font-medium text-white/75 mt-2 max-w-[250px]">Check the hostel, the beach, the line. Land with zero surprises. <span class="block mt-3"><span class="px-4 py-2 rounded-full bg-white text-black text-xs font-extrabold">From $5</span></span></div>
+        </div>
+      </div>
+      <div class="accordion-slice group relative rounded-3xl overflow-hidden min-h-[240px] border-2 border-[#111110]">
+        <img src="https://picsum.photos/seed/lanebrand/600/900" class="absolute inset-0 w-full h-full object-cover" alt="" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent"></div>
+        <div class="absolute bottom-0 p-7 text-white">
+          <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#D8FF3E]">Brands</p>
+          <h3 class="text-2xl font-extrabold">Street truth</h3>
+          <div class="slice-content text-sm font-medium text-white/75 mt-2 max-w-[250px]">500 shelf photos, unboxings, taste tests by Friday. API included. <span class="block mt-3"><span class="px-4 py-2 rounded-full bg-white text-black text-xs font-extrabold">From $99</span></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STACK : trust -->
+  <section class="py-32 md:py-48 px-5 md:px-12 max-w-4xl mx-auto">
+    <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight text-center mb-14">Wild, but not sketchy.</h2>
+    <div class="space-y-6">
+      <div class="stack-card rounded-3xl bg-[#F5F3EE] text-[#08080A] p-8 md:p-12 border-2 border-[#111110] shadow-[8px_8px_0_rgba(17,17,16,.2)]">
+        <p class="text-xs font-extrabold uppercase tracking-[0.2em] opacity-50">Promise one</p>
+        <h3 class="text-3xl font-extrabold mt-2">No feed. No autoplay next.</h3>
+        <p class="mt-3 opacity-70 font-medium">You choose a job, a doer films it, it ends. We never nudge anyone to stay. Our business is endings, not addiction.</p>
+      </div>
+      <div class="stack-card rounded-3xl bg-[#111110] text-white p-8 md:p-12 border-2 border-[#111110] shadow-[8px_8px_0_rgba(17,17,16,.2)]">
+        <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#D8FF3E]">Promise two</p>
+        <h3 class="text-3xl font-extrabold mt-2">ID-checked or it ships back.</h3>
+        <p class="mt-3 text-white/60 font-medium">Every doer passes ID + selfie before their first claim. Public places only, always.</p>
+      </div>
+      <div class="stack-card rounded-3xl bg-[#D8FF3E] p-8 md:p-12 border-2 border-[#111110] shadow-[8px_8px_0_#111110]">
+        <p class="text-xs font-extrabold uppercase tracking-[0.2em] opacity-60">Promise three</p>
+        <h3 class="text-3xl font-extrabold mt-2">Money held, never taken.</h3>
+        <p class="mt-3 font-medium opacity-70">Escrow on every order. No video, automatic refund. Cancel anytime before pickup.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACTION : pricing -->
+  <section id="pricing" class="py-32 md:py-48 px-5 md:px-12 max-w-7xl mx-auto">
+    <div class="text-center mb-12">
+      <h2 class="text-4xl md:text-6xl font-extrabold tracking-tight">Cheap to try.<br/>Stupid not to sell.</h2>
+    </div>
+    <div class="grid md:grid-cols-3 gap-5 items-stretch">
+      <div class="rounded-3xl bg-white border-2 border-[#111110] p-8 flex flex-col sticker">
+        <p class="text-sm font-extrabold uppercase tracking-[0.18em] opacity-50">Pay as you go</p>
+        <p class="mt-3"><span class="text-5xl font-extrabold">$3–$14</span></p>
+        <p class="font-medium text-black/55 text-sm mt-2">Per job. Post free, pay only when claimed. Refund if no video.</p>
+        <a href="#builder" class="mt-8 text-center px-6 py-3.5 rounded-full border-2 border-[#111110] font-extrabold text-sm hover:bg-[#111110] hover:text-white transition-all">Post a job</a>
+      </div>
+      <div class="rounded-3xl bg-[#111110] text-white p-8 flex flex-col relative border-2 border-[#111110] shadow-[8px_8px_0_#D8FF3E]">
+        <span class="absolute -top-3 right-6 text-[11px] font-extrabold uppercase tracking-[0.14em] bg-[#FF5C28] border-2 border-[#111110] px-3 py-1.5 rounded-full">Most popular</span>
+        <p class="text-sm font-extrabold uppercase tracking-[0.18em] text-[#D8FF3E]">Standin+ — $12/mo</p>
+        <p class="mt-3"><span class="text-5xl font-extrabold">$12</span><span class="opacity-50 font-bold">/mo</span></p>
+        <p class="text-white/60 font-medium text-sm mt-2">Unlimited asks, priority pickup, free rush hours. Doers still paid full price.</p>
+        <a href="#" class="mt-8 text-center px-6 py-3.5 rounded-full bg-[#D8FF3E] text-black font-extrabold text-sm hover:brightness-110 transition-all">Go unlimited</a>
+      </div>
+      <div class="rounded-3xl bg-[#7AB8FF] border-2 border-[#111110] p-8 flex flex-col sticker">
+        <p class="text-sm font-extrabold uppercase tracking-[0.18em]">Business API — $99/mo</p>
+        <p class="mt-3"><span class="text-5xl font-extrabold">$99</span><span class="font-bold opacity-60">/mo</span></p>
+        <p class="font-medium text-black/60 text-sm mt-2">500 checks, UGC rights, dashboard. Sneaker shops, Airbnb hosts, D2C brands.</p>
+        <a href="#" class="mt-8 text-center px-6 py-3.5 rounded-full bg-[#111110] text-white font-extrabold text-sm hover:bg-black transition-all">Talk to sales</a>
+      </div>
+    </div>
+
+    <div class="mt-20 rounded-[2.5rem] overflow-hidden relative bg-[#111110] text-white px-8 py-16 md:p-20 text-center border-2 border-[#111110]">
+      <div class="relative">
+        <h2 class="text-4xl md:text-7xl font-extrabold tracking-tight leading-[0.92] max-w-5xl mx-auto">Someone, somewhere,<br/>will do it <span class="text-[#D8FF3E]">for $3.</span></h2>
+        <div class="mt-10 flex flex-col sm:flex-row justify-center gap-3">
+          <a href="#builder" class="px-8 py-4 rounded-full bg-[#D8FF3E] text-black font-extrabold border-2 border-[#D8FF3E]">Post your first job</a>
+          <a href="#money" class="px-8 py-4 rounded-full border-2 border-white/25 font-extrabold hover:border-white transition-all">Earn as a doer</a>
+        </div>
+        <p class="mt-6 text-sm font-bold text-white/40">20% platform fee • escrowed • refund if no video</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="border-t-2 border-[#111110] px-5 md:px-12 py-14 max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-10">
+    <div>
+      <div class="flex items-center gap-2"><span class="w-8 h-8 rounded-full bg-[#111110] text-[#D8FF3E] grid place-items-center font-extrabold">S</span><span class="font-extrabold text-lg">STANDIN</span></div>
+      <p class="font-medium text-black/40 text-sm mt-4 max-w-xs">Humans on demand. Legal only. 41 countries and one very tired pigeon in Trafalgar Square.</p>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-10 text-sm font-bold">
+      <div class="space-y-3"><p class="text-black/30 uppercase tracking-[0.18em] text-xs">Ask</p><a href="#builder" class="block">Price it</a><a href="#live" class="block">Live jobs</a><a href="#pricing" class="block">Standin+</a></div>
+      <div class="space-y-3"><p class="text-black/30 uppercase tracking-[0.18em] text-xs">Earn</p><a href="#" class="block">Become a doer</a><a href="#" class="block">City leaderboards</a><a href="#" class="block">Payouts</a></div>
+      <div class="space-y-3"><p class="text-black/30 uppercase tracking-[0.18em] text-xs">Company</p><a href="#" class="block">Safety</a><a href="#" class="block">Contact</a><a href="#" class="block">Terms</a></div>
+    </div>
+  </footer>
+</main>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+// Hero entrance
+gsap.from("#heroCollage > div", { y: 60, opacity: 0, stagger: 0.15, duration: 1, ease: "power3.out", delay: 0.2 });
+
+// Pin: live feed images scale + fade
+document.querySelectorAll(".scale-fade-img").forEach((el) => {
+  gsap.fromTo(el, { scale: 0.94, opacity: 0.5 }, { scale: 1, opacity: 1, ease: "none",
+    scrollTrigger: { trigger: el, start: "top 92%", end: "top 55%", scrub: 1 } });
+});
+
+// Stack cards
+document.querySelectorAll(".stack-card").forEach((card) => {
+  gsap.from(card, { y: 50, scale: 0.97, ease: "power2.out",
+    scrollTrigger: { trigger: card, start: "top 92%" } });
+});
+
+// Scrub text reveal
+(function(){
+  const el = document.getElementById("scrubText");
+  const words = el.innerText.split(" ");
+  el.innerHTML = words.map(w => `<span class="reveal-word">${w}</span>`).join(" ");
+  const style = document.createElement("style");
+  style.textContent = ".reveal-word{opacity:0.1;display:inline-block}";
+  document.head.appendChild(style);
+  gsap.to(".reveal-word", {
+    opacity: 1, stagger: 0.06, ease: "none",
+    scrollTrigger: { trigger: el, start: "top 80%", end: "bottom 45%", scrub: 1 }
+  });
+})();
+
+// Builder logic
+const btns = document.querySelectorAll(".job-btn");
+const priceOut = document.getElementById("priceOut");
+const askPreview = document.getElementById("askPreview");
+const rushToggle = document.getElementById("rushToggle");
+const rushNote = document.getElementById("rushNote");
+const askInput = document.getElementById("askInput");
+let base = 3;
+function renderPrice(){
+  const total = base + (rushToggle.checked ? 2 : 0);
+  priceOut.textContent = "$" + total;
+  rushNote.textContent = rushToggle.checked ? "rush pickup" : "standard";
+}
+btns.forEach(b => b.addEventListener("click", () => {
+  btns.forEach(x => { x.classList.remove("bg-[#111110]","text-white"); x.classList.add("bg-white"); });
+  b.classList.add("bg-[#111110]","text-white"); b.classList.remove("bg-white");
+  base = parseInt(b.dataset.price, 10);
+  askPreview.textContent = b.dataset.label;
+  renderPrice();
+}));
+rushToggle.addEventListener("change", renderPrice);
+askInput.addEventListener("input", () => { if(askInput.value.trim().length > 3) askPreview.textContent = askInput.value; });
+renderPrice();
+
+// Earnings calculator
+const jobRange = document.getElementById("earnRange");
+const keepOut = document.getElementById("earnOut");
+const jobN = document.getElementById("jobN");
+const listenOut = document.getElementById("listenOut");
+jobRange.addEventListener("input", () => {
+  jobN.textContent = jobRange.value;
+  keepOut.textContent = "$" + Math.round(parseInt(jobRange.value,10) * 6 * 0.8);
+  listenOut.textContent = "from " + jobRange.value + " jobs";
+});
+
+// Fake live ticker + counter
+const lines = [
+  'Sofia just claimed "sing happy birthday in a bakery" — $3',
+  'Kenji just delivered "rain check in Shinjuku" — $5, 8 min',
+  'Amara just posted "10 hypes before interview" — $4',
+  'Luis just delivered "hold my spot at DMV" — $14, 2hrs',
+  'Nora just claimed "film snow on my street" — $3'
+];
+let li = 0;
+setInterval(() => {
+  li = (li + 1) % lines.length;
+  document.getElementById("liveLine").textContent = lines[li];
+}, 3200);
+</script>
+</body>
+</html>
