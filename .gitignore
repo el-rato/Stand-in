@@ -1,0 +1,18 @@
+# Dependencies (reinstall with npm install)
+node_modules/
+package-lock.json
+
+# Secrets — never commit real credentials
+.env
+.env.*
+!.env.example
+
+# Local AI agent tooling and caches
+.agents/
+skills-lock.json
+.vercel/
+
+# Logs and OS noise
+*.log
+.DS_Store
+Thumbs.db
