@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>STANDIN Orders — Track every ask</title>
+<link rel="stylesheet" href="./styles.css?v=4" />
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700,800&display=swap" rel="stylesheet">
+<style>
+  * { font-family: 'Cabinet Grotesk', 'Outfit', sans-serif; }
+  body { background:#FFF8EC; color:#111110; overflow-x:hidden; }
+  ::selection { background:#111110; color:#D8FF3E; }
+  .sticker { box-shadow: 4px 4px 0 #111110; }
+  .grain::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:90;opacity:.06;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  .field{ width:100%; border:2px solid #111110; border-radius:1rem; padding:.8rem 1rem; font-weight:600; background:#FFFDF6; color:#111110; caret-color:#111110; }
+  .field:focus{ outline:none; background:#D8FF3E33; }
+  .toast{ animation: toastIn .35s cubic-bezier(.22,1,.36,1); }
+  @keyframes toastIn{ from{ transform:translateY(16px); opacity:0 } to{ transform:translateY(0); opacity:1 } }
+  .modal-hidden{ display:none; }
+</style>
+</head>
+<body class="grain antialiased">
+<main class="overflow-x-hidden w-full max-w-full">
+
+  <header class="fixed top-4 left-0 right-0 z-[100] px-4 flex justify-center">
+    <nav class="w-full max-w-5xl rounded-full bg-white/90 border-2 border-[#111110] pl-5 pr-2 py-2 flex items-center justify-between shadow-[6px_6px_0_#111110]" style="backdrop-filter:blur(16px)">
+      <a href="./index.html" class="flex items-center gap-2">
+        <span class="w-9 h-9 rounded-full bg-[#111110] text-[#D8FF3E] grid place-items-center font-extrabold text-lg">S</span>
+        <span class="font-extrabold tracking-tight text-lg">STANDIN</span>
+        <span class="hidden md:inline text-[11px] font-bold uppercase tracking-[0.18em] bg-[#7AB8FF] border border-[#111110] rounded-full px-2.5 py-1 ml-1">my orders</span>
+      </a>
+      <div class="hidden md:flex items-center gap-7 text-[14px] font-semibold">
+        <a href="#orders" class="hover:underline underline-offset-4">Orders</a>
+        <a href="#sync" class="hover:underline underline-offset-4">Synced</a>
+        <a href="./doer.html" class="hover:underline underline-offset-4">Doer HQ</a>
+      </div>
+      <div class="flex items-center gap-2">
+        <span id="userChip" class="hidden sm:inline-block text-xs font-extrabold px-3 py-2 rounded-full border-2 border-[#111110]">Guest</span>
+        <a href="./index.html#builder" class="text-sm font-extrabold px-5 py-2.5 rounded-full bg-[#111110] text-white hover:bg-black transition-all">Post a job</a>
+      </div>
+    </nav>
+  </header>
+
+  <section class="pt-32 md:pt-36 pb-8 px-5 md:px-12 max-w-7xl mx-auto">
+    <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight leading-[0.95]">Every ask,<br/>tracked to payout.</h1>
+    <p class="mt-3 font-medium text-black/55 max-w-xl">Your escrow, your videos, your approvals. Cancel anytime before pickup for an instant refund.</p>
+
+    <!-- LOCK : askers only -->
+    <div id="lockScreen" class="modal-hidden mt-8 max-w-2xl">
+      <div class="bg-[#111110] text-white border-2 border-[#111110] rounded-[2rem] p-8 md:p-10 text-center">
+        <p class="text-xs font-extrabold uppercase tracking-[0.22em] text-[#7AB8FF]">Askers only</p>
+        <h2 class="text-3xl font-extrabold mt-2">Log in to see your orders.</h2>
+        <div class="mt-6 grid sm:grid-cols-2 gap-2 text-left">
+          <input id="oName" class="field !bg-white sm:col-span-1" placeholder="Display name" />
+          <input id="oCity" class="field !bg-white sm:col-span-1" placeholder="City" />
+          <input id="oEmail" type="email" class="field !bg-white sm:col-span-1" placeholder="Email" />
+          <input id="oPass" type="password" class="field !bg-white sm:col-span-1" placeholder="Password (8+)" />
+        </div>
+        <button id="oGo" class="mt-4 w-full px-6 py-4 rounded-full bg-[#D8FF3E] text-black font-extrabold">Continue →</button>
+        <p class="text-xs font-semibold text-white/40 mt-3">Online it signs you into your real account, offline it stays on this device.</p>
+      </div>
+    </div>
+  </section>
+
+  <div id="dashContent" class="modal-hidden">
+    <section class="px-5 md:px-12 max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white border-2 border-[#111110] rounded-3xl p-5 sticker"><p class="text-xs font-extrabold uppercase tracking-[0.18em] opacity-50">Open</p><p id="sOpen" class="text-4xl font-extrabold mt-1">0</p></div>
+      <div class="bg-white border-2 border-[#111110] rounded-3xl p-5 sticker"><p class="text-xs font-extrabold uppercase tracking-[0.18em] opacity-50">In progress</p><p id="sProg" class="text-4xl font-extrabold mt-1">0</p></div>
+      <div class="bg-white border-2 border-[#111110] rounded-3xl p-5 sticker"><p class="text-xs font-extrabold uppercase tracking-[0.18em] opacity-50">In escrow</p><p id="sEscrow" class="text-4xl font-extrabold mt-1">$0</p></div>
+      <div class="bg-[#111110] text-white border-2 border-[#111110] rounded-3xl p-5"><p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#D8FF3E]">Paid to doers</p><p id="sPaid" class="text-4xl font-extrabold mt-1">$0</p></div>
+    </section>
+
+    <section id="orders" class="py-12 px-5 md:px-12 max-w-5xl mx-auto scroll-mt-24">
+      <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight mb-4">My orders</h2>
+      <div id="orderList" class="space-y-4"></div>
+    </section>
+
+    <section id="sync" class="pb-20 px-5 md:px-12 max-w-5xl mx-auto scroll-mt-24">
+      <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight">Synced from your account</h2>
+      <p class="font-medium text-black/50 text-sm mt-1">Orders posted from other devices under the same login. Approve or cancel them here.</p>
+      <div id="syncList" class="mt-4 space-y-3"></div>
+    </section>
+  </div>
+
+  <footer class="border-t-2 border-[#111110] px-5 md:px-12 py-10 max-w-7xl mx-auto flex flex-col sm:flex-row justify-between gap-6 text-sm font-bold">
+    <p class="text-black/40">STANDIN Orders — escrow held until you approve the video.</p>
+    <div class="flex flex-wrap gap-6 items-center"><a href="./index.html" class="hover:underline underline-offset-4">Back to site</a><a href="./doer.html" class="hover:underline underline-offset-4">Doer HQ</a><button id="outBtn" class="text-black/35 hover:text-black hover:underline underline-offset-4">Log out</button></div>
+  </footer>
+</main>
+
+<div id="toastRoot" class="fixed bottom-4 right-4 z-[130] space-y-2 w-[calc(100%-2rem)] max-w-sm"></div>
+
+<script src="./api-bridge.js?v=4"></script>
+<script>
+(function(){
+  var KEY = "standin_v1";
+  var store = {
+    load: function(){ try { return JSON.parse(localStorage.getItem(KEY)) || { user:null, plan:"free", doer:null, jobs:[] }; } catch(e){ return { user:null, plan:"free", doer:null, jobs:[] }; } },
+    save: function(s){ localStorage.setItem(KEY, JSON.stringify(s)); }
+  };
+  var state = store.load();
+
+  function $(s){ return document.querySelector(s); }
+  function esc(s){ return String(s).replace(/</g,"&lt;"); }
+  function B(){ return window.StandinBridge; }
+
+  function toast(msg, accent){
+    var t = document.createElement("div");
+    t.className = "toast bg-[#111110] text-white rounded-2xl px-5 py-4 text-sm font-bold border-2 border-[#111110]";
+    t.innerHTML = (accent ? '<span class="inline-block px-2 py-0.5 rounded-full bg-[#D8FF3E] text-black text-xs font-extrabold mr-2">DONE</span>' : "") + msg;
+    $("#toastRoot").appendChild(t);
+    setTimeout(function(){ t.style.opacity = "0"; t.style.transition = "opacity .3s"; setTimeout(function(){ t.remove(); }, 320); }, 3400);
+  }
+
+  function myOrders(){ return state.jobs.slice().reverse(); }
+
+  function renderGate(){
+    var locked = !state.user;
+    $("#lockScreen").classList.toggle("modal-hidden", !locked);
+    $("#dashContent").classList.toggle("modal-hidden", locked);
+    $("#userChip").textContent = state.user ? state.user.name : "Guest";
+  }
+
+  function renderStats(){
+    var open = 0, prog = 0, escrow = 0, paid = 0;
+    state.jobs.forEach(function(j){
+      if (j.status === "open") { open++; escrow += j.price; }
+      else if (j.status === "claimed" || j.status === "delivered") prog++;
+      else if (j.status === "paid") paid += Math.round(j.price * 0.8 * 100) / 100;
+    });
+    $("#sOpen").textContent = open;
+    $("#sProg").textContent = prog;
+    $("#sEscrow").textContent = "$" + escrow;
+    $("#sPaid").textContent = "$" + paid;
+  }
+
+  function renderOrders(){
+    var list = $("#orderList");
+    var items = myOrders().filter(function(j){ return j.status !== "refunded"; });
+    if (!items.length) { list.innerHTML = '<div class="bg-white border-2 border-dashed border-[#111110]/30 rounded-3xl p-10 text-center font-bold text-black/40">No orders yet. <a class="underline" href="./index.html#builder">Post your first one</a> — it lands here instantly.</div>'; return; }
+    list.innerHTML = "";
+    items.forEach(function(j){
+      var pill = j.status === "paid"
+        ? '<span class="text-[11px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full bg-[#D8FF3E] border border-[#111110]">Paid</span>'
+        : j.status === "delivered"
+        ? '<span class="text-[11px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full bg-[#7AB8FF] border border-[#111110]">Delivered</span>'
+        : j.status === "claimed"
+        ? '<span class="text-[11px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full bg-white border-2 border-[#111110]">Claimed</span>'
+        : '<span class="text-[11px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full bg-black/5">Open</span>';
+      var el = document.createElement("div");
+      el.className = "bg-white border-2 border-[#111110] rounded-3xl p-5 sticker";
+      var action = "";
+      if (j.status === "open") action = '<button data-cancel="' + esc(j.id) + '" class="px-4 py-2 rounded-full border-2 border-[#111110] text-xs font-extrabold">Cancel + refund $' + j.price + '</button>';
+      else if (j.status === "delivered") action = '<button data-approve="' + esc(j.id) + '" class="px-4 py-2 rounded-full bg-[#111110] text-white text-xs font-extrabold">Approve + pay $' + (Math.round(j.price*0.8*100)/100) + '</button>';
+      else if (j.status === "paid") action = '<button data-reorder="' + esc(j.id) + '" class="px-4 py-2 rounded-full bg-[#D8FF3E] border-2 border-[#111110] text-xs font-extrabold">Run it again</button>';
+      el.innerHTML =
+        '<div class="flex flex-wrap items-start justify-between gap-3">' +
+          '<div class="min-w-0"><p class="font-extrabold leading-snug">' + esc(j.title) + '</p>' +
+          '<p class="text-xs font-bold text-black/45 mt-0.5">' + esc(j.city) + ' • $' + j.price + (j.doer ? ' • ' + esc(j.doer) : '') + (j.videoUrl ? ' • <a class="underline" href="' + esc(j.videoUrl) + '" target="_blank" rel="noopener">watch</a>' : '') + '</p>' + (j.description ? '<p class="text-xs text-black/50 mt-1">' + esc(j.description).slice(0,100) + '</p>' : '') + '</div>' +
+          '<div class="flex items-center gap-2 shrink-0">' + pill + action + '</div>' +
+        '</div>';
+      list.appendChild(el);
+    });
+  }
+
+  async function renderSync(){
+    var box = $("#syncList");
+    if (!B()) { box.innerHTML = '<p class="font-bold text-black/35 text-sm">Account sync unavailable.</p>'; return; }
+    var items = await B().mine();
+    if (items === null) { box.innerHTML = '<p class="font-bold text-black/35 text-sm">Backend offline — showing this device only. Your synced orders appear here when online.</p>'; return; }
+    var known = {};
+    state.jobs.forEach(function(j){ if (j.backendId) known[j.backendId] = true; if (j.id) known[j.clientId || j.id] = true; });
+    var extra = items.filter(function(j){ return !known[j.id] && !known[j.clientId]; });
+    if (!extra.length) { box.innerHTML = '<p class="font-bold text-black/35 text-sm">Everything is already on this device. Nothing else under your login.</p>'; return; }
+    box.innerHTML = "";
+    extra.forEach(function(j){
+      var el = document.createElement("div");
+      el.className = "bg-white border-2 border-[#7AB8FF] rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3";
+      var btns = '<span class="text-xs font-extrabold text-black/40">' + esc(j.status) + '</span>';
+      if (j.status === "open") btns = '<button data-remote-cancel="' + esc(j.id) + '" class="px-4 py-2 rounded-full border-2 border-[#111110] text-xs font-extrabold">Cancel + refund</button>';
+      if (j.status === "delivered") btns = '<button data-remote-approve="' + esc(j.id) + '" class="px-4 py-2 rounded-full bg-[#111110] text-white text-xs font-extrabold">Approve + pay</button>';
+      el.innerHTML = '<div><p class="font-extrabold text-sm">' + esc(j.title) + '</p><p class="text-xs font-bold text-black/45">' + esc(j.city) + ' • $' + j.total + ' • synced</p></div><div>' + btns + '</div>';
+      box.appendChild(el);
+    });
+  }
+
+  function renderAll(){ renderGate(); if (state.user) { renderStats(); renderOrders(); renderSync(); } }
+
+  document.addEventListener("click", function(e){
+    var c = e.target.closest("[data-cancel]");
+    if (c) {
+      var job = state.jobs.find(function(j){ return j.id === c.dataset.cancel; });
+      if (job && job.status === "open") {
+        job.status = "refunded"; store.save(state); renderAll();
+        if (job.backendId && B()) B().cancelRemote(job.backendId).catch(function(){});
+        toast("Cancelled. Escrow refunded instantly.", true);
+      }
+      return;
+    }
+    var a = e.target.closest("[data-approve]");
+    if (a) {
+      var aj = state.jobs.find(function(j){ return j.id === a.dataset.approve; });
+      if (aj && aj.status === "delivered") {
+        aj.status = "paid"; store.save(state); renderAll();
+        if (aj.backendId && B()) B().approveRemote(aj.backendId).catch(function(){});
+        toast("Approved. Doer payout released (80%).", true);
+      }
+      return;
+    }
+    var r = e.target.closest("[data-reorder]");
+    if (r) {
+      var oj = state.jobs.find(function(j){ return j.id === r.dataset.reorder; });
+      if (oj) {
+        var copy = { id: "j" + Date.now().toString(36), title: oj.title, description: oj.description || "", deadline: oj.deadline || "asap", videoLength: oj.videoLength || "1:30", city: oj.city, price: oj.price, status: "open" };
+        state.jobs.push(copy); store.save(state); renderAll();
+        if (B()) B().pushJob(copy).then(function(res){
+          if (res && res.ok) { copy.backendId = res.job.id; store.save(state); }
+          else if (res && !res.ok && !res.offline) toast("Repost blocked: " + res.error);
+        }).catch(function(){});
+        toast("Reposted to the pool.", true);
+      }
+      return;
+    }
+    var ra = e.target.closest("[data-remote-approve]");
+    if (ra && B()) { B().approveRemote(ra.dataset.remoteApprove).then(function(){ toast("Approved on your account.", true); renderSync(); }); return; }
+    var rc = e.target.closest("[data-remote-cancel]");
+    if (rc && B()) { B().cancelRemote(rc.dataset.remoteCancel).then(function(){ toast("Cancelled + refunded.", true); renderSync(); }); return; }
+  });
+
+  // Lock-screen auth: real account online, device session offline.
+  $("#oGo").addEventListener("click", async function(){
+    var name = $("#oName").value.trim(), email = $("#oEmail").value.trim().toLowerCase(), pass = $("#oPass").value;
+    if (!email.includes("@") || !pass) { toast("Email + password needed."); return; }
+    var online = B() ? await B().healthy() : false;
+    if (online) {
+      var r = await B().login({ email: email, password: pass });
+      if (!r.ok && r.json.error && r.json.error.code === "bad_credentials" && pass.length >= 8) r = await B().register({ name: name || email.split("@")[0], email: email, password: pass, city: $("#oCity").value.trim() });
+      if (!r.ok) { toast(r.json.error ? r.json.error.message + " (new here? passwords need 8+ characters)" : "Auth failed."); return; }
+      state.user = { name: r.json.user.name, email: r.json.user.email, city: r.json.user.city, backend: true };
+    } else {
+      state.user = { name: name || email.split("@")[0], email: email, city: $("#oCity").value.trim() || "Berlin", backend: false };
+    }
+    store.save(state); renderAll();
+    toast("Welcome, " + state.user.name + ".", true);
+  });
+
+  $("#outBtn").addEventListener("click", function(){
+    state.user = null;
+    state.doer = null;
+    state.plan = "free";
+    state.jobs = [];
+    if (B()) B().logout();
+    store.save(state); renderAll();
+    toast("Logged out. This device was wiped clean.");
+  });
+
+  window.addEventListener("storage", function(e){ if (e.key === KEY) { state = store.load(); renderAll(); } });
+  renderAll();
+})();
+</script>
+</body>
+</html>

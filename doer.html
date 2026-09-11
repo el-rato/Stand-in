@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>STANDIN Doer HQ — Claim orders, get paid</title>
+<link rel="stylesheet" href="./styles.css?v=4" />
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700,800&display=swap" rel="stylesheet">
+<style>
+  * { font-family: 'Cabinet Grotesk', 'Outfit', sans-serif; }
+  body { background:#FFF8EC; color:#111110; overflow-x:hidden; }
+  ::selection { background:#111110; color:#D8FF3E; }
+  .sticker { box-shadow: 4px 4px 0 #111110; }
+  .grain::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:90;opacity:.06;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  .field{ width:100%; border:2px solid #111110; border-radius:1rem; padding:.8rem 1rem; font-weight:600; background:#FFFDF6; color:#111110; caret-color:#111110; }
+  .field:focus{ outline:none; background:#D8FF3E33; }
+  .toast{ animation: toastIn .35s cubic-bezier(.22,1,.36,1); }
+  @keyframes toastIn{ from{ transform:translateY(16px); opacity:0 } to{ transform:translateY(0); opacity:1 } }
+  .modal-hidden{ display:none; }
+</style>
+</head>
+<body class="grain antialiased">
+<main class="overflow-x-hidden w-full max-w-full">
+
+  <!-- NAV -->
+  <header class="fixed top-4 left-0 right-0 z-[100] px-4 flex justify-center">
+    <nav class="w-full max-w-5xl rounded-full bg-white/90 border-2 border-[#111110] pl-5 pr-2 py-2 flex items-center justify-between shadow-[6px_6px_0_#111110]" style="backdrop-filter:blur(16px)">
+      <a href="./index.html" class="flex items-center gap-2">
+        <span class="w-9 h-9 rounded-full bg-[#111110] text-[#D8FF3E] grid place-items-center font-extrabold text-lg">S</span>
+        <span class="font-extrabold tracking-tight text-lg">STANDIN</span>
+        <span class="hidden md:inline text-[11px] font-bold uppercase tracking-[0.18em] bg-[#111110] text-[#D8FF3E] rounded-full px-2.5 py-1 ml-1">doer hq</span>
+      </a>
+      <div class="hidden md:flex items-center gap-7 text-[14px] font-semibold">
+        <a href="#available" class="hover:underline underline-offset-4">Available</a>
+        <a href="#pickups" class="hover:underline underline-offset-4">My pickups</a>
+        <a href="#earnings" class="hover:underline underline-offset-4">Earnings</a>
+      </div>
+      <div class="flex items-center gap-2">
+        <span id="doerChip" class="hidden sm:inline-block text-xs font-extrabold px-3 py-2 rounded-full border-2 border-[#111110]">Not verified</span>
+        <button id="onlineBtn" class="text-sm font-extrabold px-5 py-2.5 rounded-full bg-[#D8FF3E] border-2 border-[#111110]">Go offline</button>
+        <button id="doerLogoutBtn" class="text-sm font-bold px-3 py-2.5 hover:underline underline-offset-4">Log out</button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- HERO STRIP -->
+  <section class="pt-32 md:pt-36 pb-8 px-5 md:px-12 max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div>
+        <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight leading-[0.95]">Orders near you.<br/>Pick one up.</h1>
+        <p class="mt-3 font-medium text-black/55 max-w-xl">Every open order is broadcast to every verified doer, Uber-style. First to claim gets it. Film it, upload it, keep 80%.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-sm font-bold text-black/50">Share of each order</span>
+        <span class="text-4xl font-extrabold bg-[#D8FF3E] border-2 border-[#111110] rounded-2xl px-4 py-2 sticker">80%</span>
+      </div>
+    </div>
+
+    <!-- VERIFY GATE -->
+    <div id="verifyGate" class="modal-hidden mt-8 bg-[#111110] text-white border-2 border-[#111110] rounded-3xl p-7 md:p-9 shadow-[8px_8px_0_rgba(17,17,16,.2)]">
+      <div class="grid md:grid-cols-2 gap-8 items-center">
+        <div>
+          <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#D8FF3E]">Step 1 of 1 — demo check</p>
+          <h2 class="text-3xl font-extrabold mt-2">Verify to start claiming</h2>
+          <p class="text-white/55 font-medium mt-2 text-sm">Same 2-minute check as the main site. Stored on this device only.</p>
+        </div>
+        <div class="space-y-3">
+          <input id="dName" class="field !bg-white" placeholder="Display name e.g. Marta" />
+          <input id="dCity" class="field !bg-white" placeholder="Your city e.g. Lisbon" />
+          <button id="verifyBtn" class="w-full px-6 py-4 rounded-full bg-[#D8FF3E] text-black font-extrabold border-2 border-[#D8FF3E]">Verify me →</button>
+          <div class="h-2 rounded-full bg-white/10 overflow-hidden"><div id="verifyBar" class="h-full w-0 bg-[#D8FF3E] transition-all"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOCK SCREEN : exclusive to verified doers -->
+  <section id="lockScreen" class="modal-hidden px-5 md:px-12 max-w-3xl mx-auto pb-24 -mt-2">
+    <div class="bg-[#111110] text-white border-2 border-[#111110] rounded-[2rem] p-8 md:p-12 text-center shadow-[8px_8px_0_rgba(17,17,16,.2)]">
+      <span class="inline-grid place-items-center w-14 h-14 rounded-full bg-[#D8FF3E] text-black text-2xl font-extrabold border-2 border-[#D8FF3E]">◈</span>
+      <p class="mt-5 text-xs font-extrabold uppercase tracking-[0.22em] text-[#D8FF3E]">Doers only</p>
+      <h2 class="text-3xl md:text-5xl font-extrabold tracking-tight mt-2">This board is locked.</h2>
+      <p class="text-white/55 font-medium mt-3 max-w-md mx-auto">Open orders, pickups and payouts are visible to verified doers only. Verify on this device to unlock — it takes about 10 seconds.</p>
+      <div class="mt-7 flex flex-col sm:flex-row justify-center gap-3">
+        <button id="lockVerifyBtn" class="px-7 py-3.5 rounded-full bg-[#D8FF3E] text-black font-extrabold">Verify as doer →</button>
+        <a href="./index.html" class="px-7 py-3.5 rounded-full border-2 border-white/25 font-extrabold hover:border-white transition-all text-center">Back to main site</a>
+      </div>
+    </div>
+  </section>
+
+  <div id="dashContent">
+  <!-- STATS -->
+  <section class="px-5 md:px-12 max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="bg-white border-2 border-[#111110] rounded-3xl p-5 sticker"><p class="text-xs font-extrabold uppercase tracking-[0.18em] opacity-50">Available</p><p id="statAvail" class="text-4xl font-extrabold mt-1">0</p></div>
+    <div class="bg-white border-2 border-[#111110] rounded-3xl p-5 sticker"><p class="text-xs font-extrabold uppercase tracking-[0.18em] opacity-50">My active</p><p id="statActive" class="text-4xl font-extrabold mt-1">0</p></div>
+    <div class="bg-white border-2 border-[#111110] rounded-3xl p-5 sticker"><p class="text-xs font-extrabold uppercase tracking-[0.18em] opacity-50">Pending</p><p id="statPending" class="text-4xl font-extrabold mt-1">$0</p></div>
+    <div class="bg-[#111110] text-white border-2 border-[#111110] rounded-3xl p-5"><p class="text-xs font-extrabold uppercase tracking-[0.18em] text-[#D8FF3E]">Earned</p><p id="statEarned" class="text-4xl font-extrabold mt-1">$0</p></div>
+  </section>
+
+  <!-- MAIN GRID -->
+  <section class="py-14 px-5 md:px-12 max-w-7xl mx-auto grid lg:grid-cols-[1.35fr_1fr] gap-6 items-start">
+
+    <!-- AVAILABLE POOL -->
+    <div id="available" class="relative">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight">Open order pool</h2>
+        <span class="text-xs font-extrabold px-3 py-1.5 rounded-full bg-white border-2 border-[#111110]"><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1.5"></span><span id="poolCount">0 live</span></span>
+      </div>
+      <div class="bg-white border-2 border-[#111110] rounded-2xl p-3 flex flex-col sm:flex-row gap-2 sticker mb-4">
+        <input id="q" class="field !border-[#111110]/25" placeholder="Search orders…" />
+        <select id="cityF" class="field !border-[#111110]/25 sm:max-w-[160px]"><option value="">All cities</option></select>
+        <select id="sortF" class="field !border-[#111110]/25 sm:max-w-[160px]"><option value="new">Newest</option><option value="pay">Highest pay</option></select>
+      </div>
+      <div id="poolList" class="space-y-3"></div>
+      <div id="offlineVeil" class="modal-hidden absolute inset-0 top-0 rounded-3xl bg-[#FFF8EC]/85 border-2 border-dashed border-[#111110]/30 grid place-items-center text-center p-10" style="backdrop-filter:blur(3px)">
+        <div><p class="text-3xl font-extrabold">You're offline</p><p class="font-bold text-black/50 mt-1">Go online to see the pool.</p></div>
+      </div>
+      <div class="mt-6 bg-white border-2 border-[#111110]/15 rounded-3xl p-5">
+        <p class="text-xs font-extrabold uppercase tracking-[0.18em] opacity-40 mb-2">Live network right now</p>
+        <p id="netLine" class="text-sm font-bold text-black/60">Connecting…</p>
+      </div>
+    </div>
+
+    <!-- PICKUPS + EARNINGS -->
+    <div class="space-y-6">
+      <div id="pickups" class="bg-white border-2 border-[#111110] rounded-3xl p-6 sticker">
+        <h2 class="text-2xl font-extrabold tracking-tight">My pickups</h2>
+        <p class="text-sm font-semibold text-black/45">Claimed on this device. Deliver to unlock payout.</p>
+        <div id="pickupList" class="mt-4 space-y-4"></div>
+      </div>
+      <div id="earnings" class="bg-[#D8FF3E] border-2 border-[#111110] rounded-3xl p-6 sticker">
+        <h2 class="text-2xl font-extrabold tracking-tight">Earnings</h2>
+        <div class="mt-3 space-y-2 text-sm font-bold">
+          <div class="flex justify-between bg-white/60 border border-[#111110]/20 rounded-xl px-4 py-2.5"><span>Active jobs value (your 80%)</span><span id="earnActive">$0</span></div>
+          <div class="flex justify-between bg-white/60 border border-[#111110]/20 rounded-xl px-4 py-2.5"><span>Awaiting approval</span><span id="earnPending">$0</span></div>
+          <div class="flex justify-between bg-[#111110] text-white rounded-xl px-4 py-2.5"><span>Paid out to you</span><span id="earnPaid" class="text-[#D8FF3E]">$0</span></div>
+        </div>
+        <button id="payoutBtn" class="mt-4 w-full px-6 py-3.5 rounded-full bg-[#111110] text-white font-extrabold">Cash out →</button>
+        <div id="stripeRow" class="mt-3"></div>
+        <p class="text-xs font-bold opacity-50 mt-2 text-center">80% of every approval • $5 minimum • Friday batch</p>
+      </div>
+      <div class="bg-[#111110] text-white rounded-3xl p-6">
+        <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#D8FF3E]">Need orders to claim?</p>
+        <p class="font-bold text-sm text-white/60 mt-1">Post one from the asker side — it lands in this pool instantly on this device.</p>
+        <a href="./index.html#builder" class="mt-3 inline-block px-5 py-2.5 rounded-full bg-white text-black text-sm font-extrabold">Post a test order →</a>
+      </div>
+    </div>
+  </section>
+
+  </div><!-- /dashContent -->
+
+  <footer class="border-t-2 border-[#111110] px-5 md:px-12 py-10 max-w-7xl mx-auto flex flex-col sm:flex-row justify-between gap-6 text-sm font-bold">
+    <p class="text-black/40">STANDIN Doer HQ — same device demo, same escrow rules as production.</p>
+    <div class="flex flex-wrap gap-6 items-center"><a href="./index.html" class="hover:underline underline-offset-4">Back to site</a><a href="./orders.html" class="hover:underline underline-offset-4">My orders</a><a href="./index.html#pricing" class="hover:underline underline-offset-4">Pricing</a><button id="revokeBtn" style="display:none" class="text-black/35 hover:text-black hover:underline underline-offset-4">Remove doer access</button></div>
+  </footer>
+</main>
+
+<div id="toastRoot" class="fixed bottom-4 right-4 z-[130] space-y-2 w-[calc(100%-2rem)] max-w-sm"></div>
+
+<script src="./api-bridge.js?v=4"></script>
+<script>
+(function(){
+  var KEY = "standin_v1";
+  var store = {
+    load: function(){ try { return JSON.parse(localStorage.getItem(KEY)) || { user:null, plan:"free", doer:null, jobs:[] }; } catch(e){ return { user:null, plan:"free", doer:null, jobs:[] }; } },
+    save: function(s){ localStorage.setItem(KEY, JSON.stringify(s)); }
+  };
+  var state = store.load();
+  var online = localStorage.getItem("standin_online") !== "off";
+
+  // Demo seed pool so the board is alive before anyone posts.
+  var SEED = [
+    { id:"seed-tokyo-1", title:"Write MARRY ME ANA on a Shibuya sign", city:"Tokyo", price:9, cat:"Proposal filming" },
+    { id:"seed-berlin-1", title:"Is the Berghain line under 1hr right now?", city:"Berlin", price:5, cat:"Place check" },
+    { id:"seed-lagos-1", title:"10 hype videos before my driving test", city:"Lagos", price:4, cat:"Hype bundle" },
+    { id:"seed-austin-1", title:"Walk my dog virtually, tell him I miss him", city:"Austin", price:6, cat:"Practice pitch" },
+    { id:"seed-paris-1", title:"Film the Eiffel sparkle at 9PM, 30 sec", city:"Paris", price:9, cat:"Proposal filming" },
+    { id:"seed-mumbai-1", title:"Sunrise hype video at Marine Drive", city:"Mumbai", price:4, cat:"Hype bundle" },
+    { id:"seed-nyc-1", title:"Check the line outside the Broadway show", city:"New York", price:5, cat:"Place check" },
+    { id:"seed-oslo-1", title:"Wake-up roast call, be brutal", city:"Oslo", price:3, cat:"Wake-up roast" }
+  ];
+
+  function $(s){ return document.querySelector(s); }
+  function esc(s){ return String(s).replace(/</g,"&lt;"); }
+  function share(p){ return Math.round(p * 0.8 * 100) / 100; }
+
+  function toast(msg, accent){
+    var t = document.createElement("div");
+    t.className = "toast bg-[#111110] text-white rounded-2xl px-5 py-4 text-sm font-bold border-2 border-[#111110]";
+    t.innerHTML = (accent ? '<span class="inline-block px-2 py-0.5 rounded-full bg-[#D8FF3E] text-black text-xs font-extrabold mr-2">DONE</span>' : "") + msg;
+    $("#toastRoot").appendChild(t);
+    setTimeout(function(){ t.style.opacity = "0"; t.style.transition = "opacity .3s"; setTimeout(function(){ t.remove(); }, 320); }, 3400);
+  }
+
+  function myName(){ return state.doer ? state.doer.name : "you"; }
+
+  // Pool thumbnails matched to the order type (all photos verified). Covers
+  // base + rush totals: 3/5 roast, 4 hype, 5/7 place, 6/8 pitch, 9/11 proposal, 14/16 queue.
+  var PRICE_IMG = {
+    3: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=300&q=70",
+    4: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=300&q=70",
+    5: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=300&q=70",
+    6: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=300&q=70",
+    7: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=300&q=70",
+    8: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=300&q=70",
+    9: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=300&q=70",
+    11: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=300&q=70",
+    14: "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=300&q=70",
+    16: "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=300&q=70"
+  };
+  function priceImg(price, seed){
+    return PRICE_IMG[price] || ("https://picsum.photos/seed/" + seed + "/300/300");
+  }
+
+  function poolOrders(){
+    var taken = {};
+    state.jobs.forEach(function(j){ taken[j.id] = true; });
+    var local = state.jobs.filter(function(j){ return j.status === "open"; });
+    var seeds = SEED.filter(function(s){ return !taken[s.id]; }).map(function(s){
+      return { id:s.id, title:s.title, city:s.city, price:s.price, cat:s.cat, status:"open", seed:true };
+    });
+    return local.concat(seeds);
+  }
+  function myPickups(){
+    return state.jobs.filter(function(j){ return j.status !== "open"; }).slice().reverse();
+  }
+
+  function renderGate(){
+    var locked = !state.doer;
+    $("#verifyGate").classList.toggle("modal-hidden", !locked);
+    $("#lockScreen").classList.toggle("modal-hidden", !locked);
+    $("#dashContent").classList.toggle("modal-hidden", locked);
+    $("#doerChip").textContent = state.doer ? ("Earning as " + state.doer.name) : "Doers only";
+    document.title = state.doer ? "STANDIN Doer HQ — Claim orders, get paid" : "STANDIN Doer HQ — Doers only";
+  }
+
+  function renderStats(){
+    var pool = poolOrders(), mine = myPickups();
+    var pending = 0, earned = 0, active = 0;
+    mine.forEach(function(j){
+      if (j.status === "claimed") active += share(j.price);
+      if (j.status === "delivered") pending += share(j.price);
+      if (j.status === "paid") earned += share(j.price);
+    });
+    $("#statAvail").textContent = pool.length;
+    $("#statActive").textContent = mine.filter(function(j){ return j.status === "claimed" || j.status === "delivered"; }).length;
+    $("#statPending").textContent = "$" + pending;
+    $("#statEarned").textContent = "$" + earned;
+    $("#poolCount").textContent = pool.length + " live";
+    $("#earnActive").textContent = "$" + active;
+    $("#earnPending").textContent = "$" + pending;
+    $("#earnPaid").textContent = "$" + earned;
+  }
+
+  function renderPool(){
+    var q = $("#q").value.trim().toLowerCase();
+    var city = $("#cityF").value;
+    var sort = $("#sortF").value;
+    var items = poolOrders().filter(function(j){
+      return (!q || j.title.toLowerCase().indexOf(q) > -1) && (!city || j.city === city);
+    });
+    items.sort(function(a,b){ return sort === "pay" ? b.price - a.price : 0; });
+    var list = $("#poolList");
+    if (!items.length) { list.innerHTML = '<div class="bg-white border-2 border-dashed border-[#111110]/30 rounded-3xl p-10 text-center font-bold text-black/40">Pool is empty. Post a test order and it appears here instantly.</div>'; return; }
+    list.innerHTML = "";
+    items.forEach(function(j){
+      var el = document.createElement("div");
+      el.className = "bg-white border-2 border-[#111110] rounded-3xl p-3 flex gap-3 items-center sticker";
+      el.innerHTML =
+        '<img src="' + priceImg(j.price, j.id) + '" class="w-14 h-14 rounded-2xl object-cover border border-[#111110] shrink-0" alt="' + esc(j.title) + '" />' +
+        '<div class="flex-1 min-w-0"><p class="font-extrabold leading-tight">' + esc(j.title) + '</p>' +
+        '<p class="text-xs font-bold text-black/45 mt-0.5 uppercase tracking-wide">' + esc(j.city) + ' • keep $' + share(j.price) + '</p></div>' +
+        '<button data-claim="' + esc(j.id) + '" class="shrink-0 text-sm font-extrabold px-4 py-2.5 rounded-full bg-[#111110] text-white">$' + j.price + ' • Claim</button>';
+      list.appendChild(el);
+    });
+  }
+
+  function renderPickups(){
+    var mine = myPickups();
+    var list = $("#pickupList");
+    if (!mine.length) { list.innerHTML = '<p class="font-bold text-black/35 text-sm">Nothing yet — claim an order from the pool.</p>'; return; }
+    list.innerHTML = "";
+    mine.forEach(function(j){
+      var pill = j.status === "paid"
+        ? '<span class="text-[11px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full bg-[#D8FF3E] border border-[#111110]">Paid $' + share(j.price) + '</span>'
+        : j.status === "delivered"
+        ? '<span class="text-[11px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full bg-[#7AB8FF] border border-[#111110]">Delivered</span>'
+        : '<span class="text-[11px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full bg-white border-2 border-[#111110]">Claimed</span>';
+      var el = document.createElement("div");
+      el.className = "border-2 border-[#111110]/15 rounded-2xl p-4";
+      var action = "";
+      if (j.status === "claimed") {
+        action = '<div class="mt-3 flex gap-2"><input data-vid="' + esc(j.id) + '" class="field !py-2 !text-sm" placeholder="Video URL or attach a file below" />' +
+                 '<button data-deliver="' + esc(j.id) + '" class="shrink-0 px-4 py-2 rounded-full bg-[#111110] text-white text-xs font-extrabold">Deliver</button></div>' +
+                 '<div class="mt-2 text-xs font-bold text-black/50"><input type="file" accept="video/*" data-file="' + esc(j.id) + '" class="text-xs" /></div>';
+      } else if (j.status === "delivered") {
+        action = '<div class="mt-3 flex flex-wrap items-center gap-2"><span class="text-xs font-bold text-black/45">Awaiting asker approval…</span>' +
+                 '<button data-simapprove="' + esc(j.id) + '" class="text-xs font-extrabold underline underline-offset-4">Simulate approval (demo)</button></div>';
+      } else if (j.videoUrl) {
+        action = '<div class="mt-3"><a class="text-xs font-extrabold underline underline-offset-4" href="' + esc(j.videoUrl) + '" target="_blank" rel="noopener">Watch delivery</a></div>';
+      }
+      el.innerHTML =
+        '<div class="flex items-start justify-between gap-3">' +
+        '<div class="min-w-0"><p class="font-extrabold text-sm leading-snug">' + esc(j.title) + '</p>' +
+        '<p class="text-xs font-bold text-black/45 mt-0.5">' + esc(j.city) + ' • you keep $' + share(j.price) + '</p>' +
+        (j.description ? '<p class="text-xs text-black/50 mt-0.5">' + esc(j.description).slice(0,90) + '</p>' : '') + '</div>' + pill +
+        '</div>' + action;
+      list.appendChild(el);
+    });
+  }
+
+  function renderCities(){
+    var sel = $("#cityF"), cur = sel.value;
+    var cities = {};
+    poolOrders().forEach(function(j){ cities[j.city] = true; });
+    sel.innerHTML = '<option value="">All cities</option>' + Object.keys(cities).sort().map(function(c){
+      return '<option ' + (c === cur ? 'selected' : '') + '>' + esc(c) + '</option>';
+    }).join('');
+  }
+
+  function renderOnline(){
+    $("#onlineBtn").textContent = online ? "Go offline" : "Go online";
+    $("#onlineBtn").className = online
+      ? "text-sm font-extrabold px-5 py-2.5 rounded-full bg-[#D8FF3E] border-2 border-[#111110]"
+      : "text-sm font-extrabold px-5 py-2.5 rounded-full bg-white border-2 border-[#111110]";
+    $("#offlineVeil").classList.toggle("modal-hidden", online);
+  }
+
+  function renderAll(){ renderGate(); renderCities(); renderPool(); renderPickups(); renderStats(); renderOnline(); renderRevoke(); maybeLoadStripe(); }
+
+  // Return hop from Stripe onboarding.
+  if (location.search.indexOf("connected=1") > -1) {
+    toast("Bank connected — cash out anytime.", true);
+    history.replaceState(null, "", location.pathname);
+  }
+
+  // "Remove doer access" is a demo/owner tool: visible when the backend is
+  // unreachable (device-local demo) or the signed-in user is an admin.
+  // Regular production doers never see it. Cached 60s to avoid a health
+  // check on every render.
+  var revokeCache = { at: 0, show: false };
+  function applyRevoke(show){
+    var btn = document.getElementById("revokeBtn");
+    if (btn) btn.style.display = show ? "" : "none";
+  }
+  async function renderRevoke(force){
+    var now = Date.now();
+    if (!force && now - revokeCache.at < 60000) { applyRevoke(revokeCache.show); return; }
+    var show = true;
+    if (window.StandinBridge) {
+      var online = false;
+      try { online = await window.StandinBridge.healthy(); } catch (e) {}
+      if (!online) { show = true; }
+      else {
+        try { show = (await window.StandinBridge.api("/api/v1/admin/overview")).ok; }
+        catch (e) { show = false; }
+      }
+    }
+    revokeCache = { at: now, show: show };
+    applyRevoke(show);
+  }
+
+  // ---- actions (backend-synced when the order came from the network) ----
+  document.addEventListener("click", async function(e){
+    var claim = e.target.closest("[data-claim]");
+    if (claim) {
+      if (!state.doer) { toast("Verify first — one field, 10 seconds."); document.getElementById("verifyGate").scrollIntoView({ behavior:"smooth" }); return; }
+      var id = claim.dataset.claim;
+      var seed = SEED.find(function(s){ return s.id === id; });
+      var job = state.jobs.find(function(j){ return j.id === id; });
+      if (seed && !job) {
+        job = { id:seed.id, title:seed.title, city:seed.city, price:seed.price, status:"open" };
+        state.jobs.push(job);
+      }
+      if (!job || job.status !== "open") { toast("Already taken — pool moves fast."); renderAll(); return; }
+      job.status = "claimed"; job.doer = myName(); job.claimedHere = true;
+      store.save(state); renderAll();
+      if (job.backendId && window.StandinBridge) {
+        try {
+          await window.StandinBridge.ensureVerified(myName(), state.doer.city);
+          await window.StandinBridge.claimRemote(job.backendId);
+        } catch (err) {}
+      }
+      toast("Order claimed. Film it, then hit Deliver.", true);
+      document.getElementById("pickups").scrollIntoView({ behavior:"smooth" });
+      return;
+    }
+    var del = e.target.closest("[data-deliver]");
+    if (del) {
+      var did = del.dataset.deliver;
+      var dj = state.jobs.find(function(j){ return j.id === did; });
+      if (!dj) return;
+      var inp = document.querySelector('input[data-vid="' + did + '"]');
+      var fileInp = document.querySelector('input[data-file="' + did + '"]');
+      var url = inp && inp.value.trim() ? inp.value.trim() : null;
+      del.textContent = "Sending…"; del.disabled = true;
+      try {
+        if (!url && fileInp && fileInp.files.length && window.StandinBridge && await window.StandinBridge.healthy()) {
+          toast("Uploading video…");
+          url = await window.StandinBridge.upload(fileInp.files[0]);
+        }
+        dj.status = "delivered";
+        dj.videoUrl = url || ("https://demo.standin/video/" + did);
+        store.save(state);
+        if (dj.backendId && window.StandinBridge) {
+          try { await window.StandinBridge.deliverRemote(dj.backendId, dj.videoUrl); } catch (err) {}
+        }
+        renderAll();
+        toast("Delivered. Asker approval releases your 80%.", true);
+      } finally {
+        del.textContent = "Deliver"; del.disabled = false;
+      }
+      return;
+    }
+    var sim = e.target.closest("[data-simapprove]");
+    if (sim) {
+      var sid = sim.dataset.simapprove;
+      var sj = state.jobs.find(function(j){ return j.id === sid; });
+      if (sj && sj.status === "delivered") {
+        sj.status = "paid"; store.save(state); renderAll();
+        if (sj.backendId && window.StandinBridge) { try { await window.StandinBridge.approveRemote(sj.backendId); } catch (err) {} }
+        toast("Asker approved. $" + share(sj.price) + " earned.", true);
+      }
+      return;
+    }
+  });
+
+  ["q","cityF","sortF"].forEach(function(id){ document.getElementById(id).addEventListener("input", renderPool); });
+
+  $("#onlineBtn").addEventListener("click", function(){
+    online = !online;
+    localStorage.setItem("standin_online", online ? "on" : "off");
+    renderOnline();
+    toast(online ? "You are online — pool is live." : "You are offline — orders paused.", online);
+  });
+
+  $("#verifyBtn").addEventListener("click", function(){
+    var name = $("#dName").value.trim();
+    if (!name) { toast("Add a display name first."); return; }
+    var bar = $("#verifyBar"), p = 0;
+    var iv = setInterval(function(){
+      p += 25; bar.style.width = p + "%";
+      if (p >= 100) {
+        clearInterval(iv);
+        state.doer = { name:name, city:$("#dCity").value.trim() || "Berlin" };
+        store.save(state); renderAll();
+        toast("Verified. Claim any order.", true);
+      }
+    }, 200);
+  });
+
+  $("#payoutBtn").addEventListener("click", async function(){
+    // Real cash-out first: the backend balance from network orders.
+    if (window.StandinBridge) {
+      try {
+        if (await window.StandinBridge.healthy()) {
+          if (state.doer) { try { await window.StandinBridge.ensureVerified(state.doer.name, state.doer.city); } catch (e) {} }
+          var r = await window.StandinBridge.api("/api/v1/payouts/request", { method: "POST", body: {} });
+          if (r.ok) {
+            toast(r.json.payout.status === "transferred"
+              ? ("Sent $" + r.json.payout.amount + " to your bank.")
+              : ("$" + r.json.payout.amount + " queued for the Friday batch."), true);
+            loadStripe();
+            return;
+          }
+          if (r.json.error) { toast(r.json.error.message); return; }
+        }
+      } catch (e) {}
+    }
+    var earned = state.jobs.filter(function(j){ return j.status === "paid"; }).reduce(function(s,j){ return s + share(j.price); }, 0);
+    toast(earned > 0 ? ("Payout of $" + earned + " queued to Friday batch (demo).") : "Nothing paid out yet — deliver a pickup first.");
+  });
+
+  // Stripe Connect status: connected doers cash out to a real bank.
+  var stripeCache = { at: 0 };
+  function maybeLoadStripe(){ var now = Date.now(); if (now - stripeCache.at < 60000) return; stripeCache.at = now; loadStripe(); }
+  async function loadStripe(){
+    var row = document.getElementById("stripeRow");
+    if (!window.StandinBridge) return;
+    try { if (!(await window.StandinBridge.healthy())) return; } catch (e) { return; }
+    try {
+      if (state.doer) { try { await window.StandinBridge.ensureVerified(state.doer.name, state.doer.city); } catch (e) {} }
+      var s = await window.StandinBridge.api("/api/v1/doers/connect/status");
+      if (s.ok && s.json.connected) {
+        row.innerHTML = '<p class="text-xs font-extrabold">Payout account: Connected' + (s.json.demo ? ' (demo)' : '') + '</p>';
+      } else if (s.ok) {
+        row.innerHTML = '<button id="connectBtn" class="w-full px-4 py-2.5 rounded-full bg-[#111110] text-white text-xs font-extrabold">Connect bank payouts →</button>';
+        document.getElementById("connectBtn").addEventListener("click", async function(){
+          var c = await window.StandinBridge.api("/api/v1/doers/connect", { method: "POST", body: {} });
+          if (c.ok && c.json.url) { location.href = c.json.url; }
+          else if (c.ok) { toast("Payouts connected (demo).", true); loadStripe(); }
+          else toast("Couldn't start bank onboarding.");
+        });
+      }
+    } catch (e) {}
+  }
+
+  $("#lockVerifyBtn").addEventListener("click", function(){
+    document.getElementById("verifyGate").scrollIntoView({ behavior:"smooth" });
+    setTimeout(function(){ document.getElementById("dName").focus(); }, 450);
+  });
+
+  $("#revokeBtn").addEventListener("click", function(){
+    if (!state.doer && !state.user) { toast("Nothing to remove on this device."); return; }
+    state.user = null;
+    state.doer = null;
+    state.plan = "free";
+    state.jobs = [];
+    state.reports = [];
+    if (window.StandinBridge) window.StandinBridge.logout();
+    store.save(state); renderRevoke(true); renderAll();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast("Access removed. This device was wiped clean.");
+  });
+
+  $("#doerLogoutBtn").addEventListener("click", function(){
+    state.user = null;
+    state.doer = null;
+    state.plan = "free";
+    state.jobs = [];
+    state.reports = [];
+    if (window.StandinBridge) window.StandinBridge.logout();
+    store.save(state);
+    toast("Logged out. This device was wiped clean.");
+    setTimeout(function(){ location.href = "./index.html"; }, 600);
+  });
+
+  // Live network strip from the real backend when reachable + live toasts.
+  function updateNet(items){
+    if (!items.length) { $("#netLine").textContent = "Backend reachable, pool is quiet — yours will show here."; return; }
+    $("#netLine").textContent = items.slice(0,3).map(function(j){ return j.title + " ($" + j.total + ")"; }).join("  •  ");
+  }
+  if (window.StandinBridge) {
+    window.StandinBridge.hydrate().then(updateNet).catch(function(){ $("#netLine").textContent = "Backend offline — showing device pool."; });
+    try {
+      window.StandinBridge.sse(function(type, ev){
+        if (type === "job.opened") toast("New network order" + (ev.city ? " in " + ev.city : "") + " — $" + (ev.total || "?"));
+        window.StandinBridge.hydrate().then(updateNet).catch(function(){});
+      });
+    } catch (e) {}
+    setTimeout(function(){ if ($("#netLine").textContent === "Connecting…") $("#netLine").textContent = "Backend offline — showing device pool."; }, 2500);
+  } else {
+    $("#netLine").textContent = "Backend offline — showing device pool.";
+  }
+
+  window.addEventListener("storage", function(e){ if (e.key === KEY) { state = store.load(); renderAll(); } });
+  setInterval(function(){ state = store.load(); renderPool(); renderPickups(); renderStats(); renderCities(); }, 15000);
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
