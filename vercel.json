@@ -1,4 +1,5 @@
 {
+  "outputDirectory": ".",
   "routes": [
     { "src": "^/(backend|node_modules)(/.*)?$", "status": 404 },
     { "handle": "filesystem" },
