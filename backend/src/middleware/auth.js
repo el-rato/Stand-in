@@ -21,3 +21,16 @@ export function requireAuth(store) {
     }
   };
 }
+
+export function requireAdmin(store) {
+  const authenticate = requireAuth(store);
+  return (req, res, next) => {
+    authenticate(req, res, () => {
+      const bootstrapAdmin = config.adminEmails.includes(req.user.email.toLowerCase());
+      if (req.user.role !== 'admin' && !bootstrapAdmin) {
+        return res.status(403).json({ error: { code: 'forbidden', message: 'admin access required' } });
+      }
+      next();
+    });
+  };
+}

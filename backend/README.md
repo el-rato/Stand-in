@@ -1,7 +1,7 @@
 # STANDIN API — scalable backend for the humans-on-demand marketplace
 
-Stateless Express API. Zero-dependency demo by default, Postgres/Redis/Stripe
-scale path without changing routes.
+Express API with a zero-config local demo and production adapters for
+Postgres, Redis, S3, and Stripe.
 
 ```
 browser (index.html + api-bridge.js)
@@ -9,8 +9,8 @@ browser (index.html + api-bridge.js)
    ▼
 Express API (stateless — scale replicas freely)
    ├── JSON file store (demo, 1 replica) ──► Postgres (multi-replica) via DATABASE_URL
-   ├── in-process events/queue ─────────────► Redis pub/sub + BullMQ via REDIS_URL
-   ├── local /uploads ──────────────────────► S3 presigned URLs via S3_BUCKET
+   ├── in-process events locally ───────────► Redis pub/sub via REDIS_URL
+   ├── local /uploads locally ──────────────► S3 presigned URLs via S3_BUCKET
    └── demo billing ────────────────────────► Stripe PaymentIntents + webhook
 ```
 
@@ -50,9 +50,10 @@ Money rules enforced server-side:
 ## Scale path
 
 - **Postgres**: `psql $DATABASE_URL -f migrations/001_init.sql`, `npm i pg`, set `DATABASE_URL`. Includes feed cursor index, per-asker `clientId` dedupe, `FOR UPDATE` transitions.
-- **Redis**: set `REDIS_URL` — swap `src/lib/events.js` fan-out to pub/sub and `src/lib/queue.js` to BullMQ (interfaces already isolated to those two files).
-- **Files**: set `S3_BUCKET` — swap `misc.js` presign to S3 presigned POSTs (response shape unchanged).
+- **Redis**: set `REDIS_URL` for shared rate limits and cross-instance realtime events.
+- **Files**: set `S3_BUCKET`, `AWS_REGION`, AWS credentials, and optionally `S3_PUBLIC_BASE_URL`. Production clients upload directly through signed S3 URLs.
 - **Stripe**: set `STRIPE_SECRET` (+ webhook secret) — checkout creates real PaymentIntents; plan flips on in `/billing/webhook`. Test with `stripe listen --forward-to localhost:3001/api/v1/billing/webhook`.
+- **Readiness**: run `npm run check:production` to verify environment variables, migrations, Redis, and the S3 bucket without printing credentials.
 - **Deploy**: `docker compose up --build` (api + postgres + redis). Replicas are stateless — put them behind any load balancer with sticky SSE.
 
 ## Security notes

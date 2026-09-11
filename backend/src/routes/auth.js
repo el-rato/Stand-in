@@ -47,5 +47,5 @@ export function authRoutes(store) {
 }
 
 function safe(u) {
-  return { id: u.id, name: u.name, email: u.email, city: u.city, plan: u.plan, createdAt: u.createdAt };
+  return { id: u.id, name: u.name, email: u.email, city: u.city, plan: u.plan, role: u.role || 'user', createdAt: u.createdAt };
 }

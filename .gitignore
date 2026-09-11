@@ -1,6 +1,5 @@
 # Dependencies (reinstall with npm install)
 node_modules/
-package-lock.json
 
 # Secrets — never commit real credentials
 .env

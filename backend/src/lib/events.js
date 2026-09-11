@@ -4,20 +4,36 @@
 // The SSE route is the only consumer, so the swap is one file.
 
 import { EventEmitter } from 'node:events';
+import { getRedis } from './redis.js';
 
 const bus = new EventEmitter();
 bus.setMaxListeners(1000);
 
-let seq = 0;
-
-export function publish(type, payload = {}) {
-  seq += 1;
-  const event = { seq, type, at: new Date().toISOString(), ...payload };
-  bus.emit('event', event);
+export async function publish(type, payload = {}) {
+  const event = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`, type, at: new Date().toISOString(), ...payload };
+  const redis = getRedis();
+  if (redis) {
+    try { await (await redis).publish('standin:events', JSON.stringify(event)); }
+    catch (err) {
+      console.error('[events]', err.message);
+      bus.emit('event', event);
+    }
+  } else bus.emit('event', event);
   return event;
 }
 
-export function subscribe(handler) {
-  bus.on('event', handler);
-  return () => bus.off('event', handler);
+export async function subscribe(handler) {
+  const redis = getRedis();
+  if (!redis) {
+    bus.on('event', handler);
+    return () => bus.off('event', handler);
+  }
+  const subscriber = (await redis).duplicate();
+  subscriber.on('error', err => console.error('[redis:subscriber]', err.message));
+  await subscriber.connect();
+  await subscriber.subscribe('standin:events', message => {
+    try { handler(JSON.parse(message)); }
+    catch (err) { console.error('[events]', err.message); }
+  });
+  return () => subscriber.close();
 }

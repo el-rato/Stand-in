@@ -1,17 +1,8 @@
-// Background work queue. Default runs inline (setImmediate) so the demo
-// needs no infrastructure. Scale path: back this with BullMQ + Redis and
-// move verification callbacks, payout runs, notifications and moderation
-// scans into named jobs with retries. Callers use `enqueue()` either way.
+// These hooks complete before the request returns. This is reliable in
+// short-lived serverless functions and can later be replaced by a durable queue.
 
 export async function enqueue(name, payload = {}) {
-  // In-process execution with at-least-once logging.
-  setImmediate(async () => {
-    try {
-      await handle(name, payload);
-    } catch (err) {
-      console.error(`[queue] job failed: ${name}`, err.message);
-    }
-  });
+  await handle(name, payload);
   return { queued: name };
 }
 

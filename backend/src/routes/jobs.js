@@ -67,7 +67,7 @@ export function jobRoutes(store) {
         doerShare: quote.doer,
         clientId: body.clientId,
       });
-      publish('job.opened', { jobId: job.id, city: job.city, total: job.total });
+      await publish('job.opened', { jobId: job.id, city: job.city, total: job.total });
       res.status(job.duplicate ? 200 : 201).json({ job, quote });
     } catch (e) { next(e); }
   });
@@ -88,7 +88,7 @@ export function jobRoutes(store) {
         draft.status = 'claimed';
         draft.doerId = req.user.id;
       });
-      publish('job.claimed', { jobId: job.id, doerId: req.user.id });
+      await publish('job.claimed', { jobId: job.id, doerId: req.user.id });
       res.json({ job });
     } catch (e) { next(e); }
   });
@@ -106,8 +106,8 @@ export function jobRoutes(store) {
         draft.status = 'delivered';
         draft.videoUrl = body.videoUrl;
       });
-      publish('job.delivered', { jobId: job.id });
-      enqueue('moderation.scan', { jobId: job.id, videoUrl: body.videoUrl });
+      await publish('job.delivered', { jobId: job.id });
+      await enqueue('moderation.scan', { jobId: job.id, videoUrl: body.videoUrl });
       res.json({ job });
     } catch (e) { next(e); }
   });
@@ -125,8 +125,8 @@ export function jobRoutes(store) {
       });
       await store.appendLedger({ jobId: job.id, type: 'release', amount: job.doerShare, actor: job.doerId });
       await store.appendLedger({ jobId: job.id, type: 'fee', amount: job.fee, actor: 'platform' });
-      publish('job.paid', { jobId: job.id, amount: job.doerShare });
-      enqueue('payout.released', { jobId: job.id, doerId: job.doerId, amount: job.doerShare });
+      await publish('job.paid', { jobId: job.id, amount: job.doerShare });
+      await enqueue('payout.released', { jobId: job.id, doerId: job.doerId, amount: job.doerShare });
       res.json({ job });
     } catch (e) { next(e); }
   });
@@ -143,7 +143,7 @@ export function jobRoutes(store) {
         draft.status = 'refunded';
       });
       await store.appendLedger({ jobId: job.id, type: 'refund', amount: job.total, actor: job.askerId });
-      publish('job.refunded', { jobId: job.id });
+      await publish('job.refunded', { jobId: job.id });
       res.json({ job });
     } catch (e) { next(e); }
   });

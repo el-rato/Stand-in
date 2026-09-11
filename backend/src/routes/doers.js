@@ -38,8 +38,8 @@ export function doerRoutes(store) {
         return res.status(400).json({ error: { code: 'no_profile', message: 'create a doer profile first' } });
       }
       const doer = await store.upsertDoer(req.user.id, { status: 'verified' });
-      publish('doer.verified', { userId: req.user.id });
-      enqueue('verification.completed', { userId: req.user.id });
+      await publish('doer.verified', { userId: req.user.id });
+      await enqueue('verification.completed', { userId: req.user.id });
       res.json({ doer });
     } catch (e) { next(e); }
   });

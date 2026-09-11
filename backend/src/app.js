@@ -9,6 +9,7 @@ import path from 'node:path';
 import { config } from './config.js';
 import { errorHandler } from './middleware/errors.js';
 import { wafLite } from './middleware/waf.js';
+import { rateLimitStore } from './lib/redis.js';
 
 import { authRoutes } from './routes/auth.js';
 import { jobRoutes } from './routes/jobs.js';
@@ -139,7 +140,7 @@ export function createApp(store) {
   // Uploads
   // --------------------------------------------------
 
-  if (config.uploadsDir) {
+  if (config.uploadsDir && !config.s3Bucket) {
     app.use(
       '/uploads',
       express.static(config.uploadsDir)
@@ -157,16 +158,25 @@ export function createApp(store) {
   const authLimiter = rateLimit({
     windowMs: 60_000,
     max: 20,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    store: rateLimitStore('auth'),
   });
 
   const writeLimiter = rateLimit({
     windowMs: 60_000,
     max: 120,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    store: rateLimitStore('write'),
   });
 
   const adminLimiter = rateLimit({
     windowMs: 60_000,
     max: 120,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    store: rateLimitStore('admin'),
   });
 
   const maybe = (limiter) =>
